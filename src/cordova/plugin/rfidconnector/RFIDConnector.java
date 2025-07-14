@@ -18,7 +18,7 @@ import android.os.Looper;
 
 public class RFIDConnector extends CordovaPlugin {
     static String details = "EMPTY";
-    static String deviceType = "Zebra";
+    static String deviceType = "TSL";
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
