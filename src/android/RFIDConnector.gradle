@@ -5,7 +5,7 @@ jcenter()
    }
 }
 dependencies {
-  compile(name : 'Rfid.AsciiProtocol-1.4.5-release',ext:'aar')
+  implementation(name : 'Rfid.AsciiProtocol-1.4.5-release',ext:'aar')
 }
 
 
