@@ -11,11 +11,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+
 import com.uk.tsl.rfid.asciiprotocol.AsciiCommander;
 import com.uk.tsl.rfid.asciiprotocol.commands.BarcodeCommand;
 import com.uk.tsl.rfid.asciiprotocol.commands.BatteryStatusCommand;
 import com.uk.tsl.rfid.asciiprotocol.commands.InventoryCommand;
 import com.uk.tsl.rfid.asciiprotocol.commands.VersionInformationCommand;
+import com.uk.tsl.rfid.asciiprotocol.device.Reader;
 import com.uk.tsl.rfid.asciiprotocol.enumerations.Databank;
 import com.uk.tsl.rfid.asciiprotocol.enumerations.QuerySession;
 import com.uk.tsl.rfid.asciiprotocol.enumerations.QueryTarget;
@@ -36,8 +38,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.v4.content.LocalBroadcastManager;
-
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 public class TSLScannerDevice implements ScannerDevice {
 
@@ -76,10 +77,7 @@ public class TSLScannerDevice implements ScannerDevice {
     }
 
     public AsciiCommander getCommander() {
-        if (commander == null) {
-            commander = new AsciiCommander(context);
-        }
-        return commander;
+        return AsciiCommander.sharedInstance();
     }
 
     //
@@ -102,7 +100,7 @@ public class TSLScannerDevice implements ScannerDevice {
                                             || versionInfoCommand.getManufacturer()
                                                                  .toString()
                                                                  .contains("Technology Solutions"))) {
-                                        commander.disconnect();
+                                        commander.getReader().disconnect();
                                         connectCallback.error("Not a recognised device!");
                                     }else{
                                         InventoryCommand inventoryCommand = getInventoryInstance();
@@ -157,7 +155,11 @@ public class TSLScannerDevice implements ScannerDevice {
                         for (BluetoothDevice device : listOfBondedDevices) {
                             if (deviceID.equals(device.getAddress()) || deviceID.equals(device.getName())) {
                                 BluetoothDevice bluetoothDevice = bluetoothAdapter.getRemoteDevice(device.getAddress());
-                                commander.connect(bluetoothDevice);
+                                
+                                Reader reader = new Reader(bluetoothDevice);
+                                reader.connect();
+                                commander.setReader(reader);
+                                
                                 // printResponders(callbackContext, "After connect");
 
                                 // PluginResult pluginResult = new
@@ -209,7 +211,7 @@ public class TSLScannerDevice implements ScannerDevice {
             inventoryResponder = null;
             barcodeResponder = null;
             dataAvailableCallback = null;
-            commander.disconnect();
+            commander.getReader().disconnect();
         }
 
         // PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "Trying to
