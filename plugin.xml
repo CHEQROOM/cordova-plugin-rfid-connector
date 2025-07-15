@@ -15,13 +15,15 @@
         <config-file target="AndroidManifest.xml" parent="/manifest">
             <uses-permission android:name="android.permission.BLUETOOTH" />
             <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+            <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+            <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
         </config-file>
-        <source-file src="src/cordova/plugin/rfidconnector/RFIDConnector.java" target-dir="src/cordova-plugin-rfidconnector/RFIDConnector" />
-        <source-file src="src/cordova/plugin/rfidconnector/ScannerDevice.java" target-dir="src/cordova-plugin-rfidconnector/RFIDConnector" />
-        <source-file src="src/cordova/plugin/rfidconnector/TSLScannerDevice.java" target-dir="src/cordova-plugin-rfidconnector/RFIDConnector" />
-        <source-file src="src/cordova/plugin/rfidconnector/ScannerDeviceFactory.java" target-dir="src/cordova-plugin-rfidconnector/RFIDConnector" />
-        <source-file src="src/cordova/plugin/rfidconnector/ConversionUtil.java" target-dir="src/cordova-plugin-rfidconnector/RFIDConnector" />
-        <source-file src="src/cordova/plugin/rfidconnector/JSONUtil.java" target-dir="src/cordova-plugin-rfidconnector/RFIDConnector" />
+        <source-file src="src/android/RFIDConnector.java" target-dir="src/cordova-plugin-rfidconnector" />
+        <source-file src="src/android/ScannerDevice.java" target-dir="src/cordova-plugin-rfidconnector" />
+        <source-file src="src/android/TSLScannerDevice.java" target-dir="src/cordova-plugin-rfidconnector" />
+        <source-file src="src/android/ScannerDeviceFactory.java" target-dir="src/cordova-plugin-rfidconnector" />
+        <source-file src="src/android/ConversionUtil.java" target-dir="src/cordova-plugin-rfidconnector" />
+        <source-file src="src/android/JSONUtil.java" target-dir="src/cordova-plugin-rfidconnector" />
         <resource-file src="src/android/Rfid.AsciiProtocol-Library/Rfid.AsciiProtocol-3.5.0-release.aar" target="libs/Rfid.AsciiProtocol-3.5.0-release.aar"/>
 		<framework src="src/android/RFIDConnector.gradle" custom="true" type="gradleReference" />
     </platform>

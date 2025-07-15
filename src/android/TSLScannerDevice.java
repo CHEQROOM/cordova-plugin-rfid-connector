@@ -30,6 +30,7 @@ import com.uk.tsl.rfid.asciiprotocol.responders.IBarcodeReceivedDelegate;
 import com.uk.tsl.rfid.asciiprotocol.responders.ITransponderReceivedDelegate;
 import com.uk.tsl.rfid.asciiprotocol.responders.TransponderData;
 import com.uk.tsl.rfid.asciiprotocol.device.ConnectionState;
+import com.uk.tsl.utils.Observable;
 
 import android.content.Context;
 import android.content.Intent;
@@ -71,8 +72,13 @@ public class TSLScannerDevice implements ScannerDevice {
     public TSLScannerDevice(final CordovaPlugin rfidConnector) {
         this.rfidConnector = rfidConnector;
         this.context = rfidConnector.cordova.getActivity().getBaseContext();
+
+        AsciiCommander.createSharedInstance(this.context);
+
         this.commander = getCommander();
         mInventoryCommand = getInventoryInstance();
+
+        ReaderManager.create(this.context);
     }
 
     public AsciiCommander getCommander() {
@@ -97,7 +103,7 @@ public class TSLScannerDevice implements ScannerDevice {
                             mReader = mReaders.get(0);
                         } else {
                             for (Reader reader : mReaders) {
-                                if (reader) {
+                                if (reader != null) {
                                     mReader = reader;
                                 }
                             }
@@ -105,8 +111,7 @@ public class TSLScannerDevice implements ScannerDevice {
 
                         if(mReader != null){
                             mReader.connect();
-                            commander.setReader(mReader);
-                            commander.connect();
+                            getCommander().setReader(mReader);
                             return;
                         }
 
@@ -194,18 +199,21 @@ public class TSLScannerDevice implements ScannerDevice {
 
     @Override
     public void getDeviceList(final CallbackContext callbackContext) {
-        checkForBluetoothPermission();
-        ReaderManager.sharedInstance().updateList();
+        try{
+            ReaderManager.sharedInstance().updateList();
 
-         ArrayList<Reader> mReaders = ReaderManager.sharedInstance().getReaderList().list();
-         JSONArray deviceList = new JSONArray();
-         for (Reader reader : mReaders) {
-            JSONObject deviceDetail = new JSONObject();
-            deviceDetail.put("name", reader.getDisplayName());
-            deviceDetail.put("deviceID", reader.getDisplayInfoLine());
-            deviceList.put(deviceDetail);
+            ArrayList<Reader> mReaders = ReaderManager.sharedInstance().getReaderList().list();
+            JSONArray deviceList = new JSONArray();
+            for (Reader reader : mReaders) {
+                JSONObject deviceDetail = new JSONObject();
+                deviceDetail.put("name", reader.getDisplayName());
+                deviceDetail.put("deviceID", reader.getDisplayInfoLine());
+                deviceList.put(deviceDetail);
+            }
+            callbackContext.success(JSONUtil.createJSONObjectSuccessResponse(deviceList));
+         } catch (JSONException ex) {
+            callbackContext.error(ex.getMessage());
          }
-         callbackContext.success(JSONUtil.createJSONObjectSuccessResponse(deviceList));
     }
 
     @Override
@@ -624,99 +632,6 @@ public class TSLScannerDevice implements ScannerDevice {
             callbackContext.sendPluginResult(pluginResult);
         }
     }
-
-    
-    //----------------------------------------------------------------------------------------------
-    // Bluetooth permissions checking
-    //----------------------------------------------------------------------------------------------
-
-    private void checkForBluetoothPermission()
-    {
-        // Older permissions are granted at install time
-        if (Build.VERSION.SDK_INT < 31 ) return;
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED
-            || ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED)
-        {
-            if (shouldShowRequestPermissionRationale(Manifest.permission.BLUETOOTH_CONNECT))
-            {
-                // In an educational UI, explain to the user why your app requires this
-                // permission for a specific feature to behave as expected. In this UI,
-                // include a "cancel" or "no thanks" button that allows the user to
-                // continue using your app without granting the permission.
-                offerBluetoothPermissionRationale();
-            }
-            else
-            {
-                requestPermissionLauncher.launch(bluetoothPermissions);
-            }
-        }
-    }
-
-    private final String[] bluetoothPermissions = new String[] { Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN};
-
-    void offerBluetoothPermissionRationale()
-    {
-        // Older permissions are granted at install time
-        if (Build.VERSION.SDK_INT < 31 ) return;
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Permission is required to connect to TSL Readers over Bluetooth" )
-               .setTitle("Allow Bluetooth?");
-
-        builder.setPositiveButton("Show Permission Dialog", new DialogInterface.OnClickListener() {
-            @RequiresApi(api = Build.VERSION_CODES.S)
-            public void onClick(DialogInterface dialog, int id)
-            {
-                requestPermissionLauncher.launch(new String[] { Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN});
-            }
-        });
-
-
-        AlertDialog dialog = builder.create();
-        dialog.show();
-    }
-
-
-    void showBluetoothPermissionDeniedConsequences()
-    {
-        // Note: When permissions have been denied, this will be invoked everytime checkForBluetoothPermission() is called
-        // In your app, we suggest you limit the number of times the User is notified.
-        appendMessage("\nThis app will not be able to connect to TSL Readers via Bluetooth.\n\nThis can be changed in Settings->Apps.\n" );
-    }
-
-
-    // Register the permissions callback, which handles the user's response to the
-    // system permissions dialog. Save the return value, an instance of
-    // ActivityResultLauncher, as an instance variable.
-    private final ActivityResultLauncher<String[]> requestPermissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), permissionsGranted ->
-            {
-                //boolean allGranted = permissionsGranted.values().stream().reduce(true, Boolean::logicalAnd);
-                boolean allGranted = true;
-                for( boolean isGranted : permissionsGranted.values())
-                {
-                    allGranted = allGranted && isGranted;
-                }
-
-                if (allGranted)
-                {
-                    // Permission is granted. Continue the action or workflow in your
-                    // app.
-
-                    // Update the ReaderList which will add any unknown reader, firing events appropriately
-                    ReaderManager.sharedInstance().updateList();
-                }
-                else
-                {
-                    // Explain to the user that the feature is unavailable because the
-                    // features requires a permission that the user has denied. At the
-                    // same time, respect the user's decision. Don't link to system
-                    // settings in an effort to convince the user to change their
-                    // decision.
-                    showBluetoothPermissionDeniedConsequences();
-                }
-            });
 
      //----------------------------------------------------------------------------------------------
     // AsciiCommander message handling
