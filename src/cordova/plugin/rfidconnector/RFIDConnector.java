@@ -22,18 +22,11 @@ public class RFIDConnector extends CordovaPlugin {
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+        ScannerDevice scannerDevice = ScannerDeviceFactory.getInstance(this, "TSL");
+
         if ("getDeviceList".equals(action)) {
-            this.getDeviceList(callbackContext);
-            return true;
-        }
-
-        if ("connect".equals(action)) {
-            deviceType = args.getString(0);
-        }
-
-        ScannerDevice scannerDevice = ScannerDeviceFactory.getInstance(this, deviceType);
-
-        if ("connect".equals(action)) {
+            scannerDevice.getDeviceList(callbackContext);
+        } else if ("connect".equals(action)) {
             scannerDevice.connect(args.getString(1), callbackContext);
         } else if ("isConnected".equals(action)) {
             scannerDevice.isConnected(callbackContext);
@@ -60,41 +53,5 @@ public class RFIDConnector extends CordovaPlugin {
             return false;
         }
         return true;
-    }
-
-    public void getDeviceList(final CallbackContext callbackContext) {
-        final CordovaPlugin that = this;
-        final Context context = that.cordova.getActivity().getBaseContext();
-
-        Handler handler = new Handler(Looper.getMainLooper());
-        handler.post(new Runnable() {
-
-            @Override
-            public void run() {
-                BluetoothManager bluetoothManager = (BluetoothManager) context.getSystemService(context.BLUETOOTH_SERVICE);
-                BluetoothAdapter bluetoothAdapter = bluetoothManager.getAdapter();
-
-                Boolean status = bluetoothAdapter.startDiscovery();
-
-                Set<BluetoothDevice> listOfBondedDevices = bluetoothAdapter.getBondedDevices();
-                try {
-                    JSONArray deviceList = new JSONArray();
-                    for (BluetoothDevice device : listOfBondedDevices) {
-                        JSONObject deviceDetail = new JSONObject();
-                        deviceDetail.put("name", device.getName());
-                        deviceDetail.put("deviceID", device.getAddress());
-                        // deviceDetail.put("state", bluetoothDevice.getBondState());
-                        // deviceDetail.put("type", bluetoothDevice.getType());
-                        deviceList.put(deviceDetail);
-                    }
-                    JSONObject result = JSONUtil.createJSONObjectSuccessResponse(deviceList);
-                    callbackContext.success(result);
-                } catch (JSONException ex) {
-                    callbackContext.error(ex.getMessage());
-                }
-
-            }
-        });
-
     }
 }

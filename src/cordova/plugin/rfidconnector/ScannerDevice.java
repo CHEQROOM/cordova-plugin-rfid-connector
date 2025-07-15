@@ -24,6 +24,13 @@ public interface ScannerDevice {
      */
     void disconnect(final CallbackContext callbackContext);
 
+
+    /**
+     * @param callbackContext
+     * @return
+     */
+    void getDeviceList(final CallbackContext callbackContext);
+
     /**
      * @param callbackContext
      * @return

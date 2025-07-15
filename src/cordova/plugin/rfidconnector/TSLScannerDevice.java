@@ -18,6 +18,7 @@ import com.uk.tsl.rfid.asciiprotocol.commands.BatteryStatusCommand;
 import com.uk.tsl.rfid.asciiprotocol.commands.InventoryCommand;
 import com.uk.tsl.rfid.asciiprotocol.commands.VersionInformationCommand;
 import com.uk.tsl.rfid.asciiprotocol.device.Reader;
+import com.uk.tsl.rfid.asciiprotocol.device.ReaderManager;
 import com.uk.tsl.rfid.asciiprotocol.enumerations.Databank;
 import com.uk.tsl.rfid.asciiprotocol.enumerations.QuerySession;
 import com.uk.tsl.rfid.asciiprotocol.enumerations.QueryTarget;
@@ -28,17 +29,13 @@ import com.uk.tsl.rfid.asciiprotocol.responders.IAsciiCommandResponder;
 import com.uk.tsl.rfid.asciiprotocol.responders.IBarcodeReceivedDelegate;
 import com.uk.tsl.rfid.asciiprotocol.responders.ITransponderReceivedDelegate;
 import com.uk.tsl.rfid.asciiprotocol.responders.TransponderData;
+import com.uk.tsl.rfid.asciiprotocol.device.ConnectionState;
 
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Handler;
 import android.os.Looper;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 public class TSLScannerDevice implements ScannerDevice {
 
@@ -62,12 +59,14 @@ public class TSLScannerDevice implements ScannerDevice {
     private static InventoryCommand mInventoryCommand;
     private static InventoryCommand inventoryResponder;
     private static BarcodeCommand barcodeResponder;
-
+    
     private static InventoryCommand inventorySearchResponder;
     private static CallbackContext searchCallback;
     private static CallbackContext connectCallback;
     private static CallbackContext disconnectCallback;
 	
+    // The Reader currently in use
+    private Reader mReader = null;
 
     public TSLScannerDevice(final CordovaPlugin rfidConnector) {
         this.rfidConnector = rfidConnector;
@@ -80,63 +79,10 @@ public class TSLScannerDevice implements ScannerDevice {
         return AsciiCommander.sharedInstance();
     }
 
-    //
-    // Handle the messages broadcast from the AsciiCommander
-    //
-    private BroadcastReceiver mCommanderMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-
-            switch (commander.getConnectionState()) {
-                case CONNECTED:
-                    if (connectCallback != null) {
-                        removeAsyncAndAddSyncResponder();
-                             if (commander.isConnected()) {
-                                    VersionInformationCommand versionInfoCommand = VersionInformationCommand.synchronousCommand();
-                                    commander.executeCommand(versionInfoCommand);
-                            if (versionInfoCommand.getManufacturer() == null || !(versionInfoCommand.getManufacturer()
-                                                                                                    .toString()
-                                                                                                    .contains("TSL")
-                                            || versionInfoCommand.getManufacturer()
-                                                                 .toString()
-                                                                 .contains("Technology Solutions"))) {
-                                        commander.getReader().disconnect();
-                                        connectCallback.error("Not a recognised device!");
-                                    }else{
-                                        InventoryCommand inventoryCommand = getInventoryInstance();
-                                        inventoryCommand.setTakeNoAction(TriState.YES);
-                                        commander.executeCommand(inventoryCommand);
-                                        removeSyncAndAddAsyncResponder();
-                                        connectCallback.success("true");
-                                        connectCallback = null;
-                                    }
-                                    
-                                }else{
-                                connectCallback.error("Commander is not connected!");
-                                }
-                          }
-                    break;
-                case DISCONNECTED:
-                    if (connectCallback != null) {
-                        connectCallback.error(commander.getConnectionState().name());
-                        connectCallback = null;
-                    }
-                    if (disconnectCallback != null) {
-                        disconnectCallback.success("true");
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
-
     @Override
     public void connect(final String deviceID, final CallbackContext callbackContext) {
         connectCallback = callbackContext;
-        // Register to receive notifications from the AsciiCommander
-        LocalBroadcastManager.getInstance(context).registerReceiver(mCommanderMessageReceiver,
-            new IntentFilter(AsciiCommander.STATE_CHANGED_NOTIFICATION));
+        
         // printResponders(callbackContext, "Before connect");
         Handler handler = new Handler(Looper.getMainLooper());
         handler.post(new Runnable() {
@@ -146,31 +92,24 @@ public class TSLScannerDevice implements ScannerDevice {
                     if (commander.isConnected()) {
                         callbackContext.error(DEVICE_IS_ALREADY_CONNECTED);
                     } else {
-                        BluetoothManager bluetoothManager = (BluetoothManager) context.getSystemService(context.BLUETOOTH_SERVICE);
-                        BluetoothAdapter bluetoothAdapter = bluetoothManager.getAdapter();
-
-                        Boolean status = bluetoothAdapter.startDiscovery();
-                        Set<BluetoothDevice> listOfBondedDevices = bluetoothAdapter.getBondedDevices();
-
-                        for (BluetoothDevice device : listOfBondedDevices) {
-                            if (deviceID.equals(device.getAddress()) || deviceID.equals(device.getName())) {
-                                BluetoothDevice bluetoothDevice = bluetoothAdapter.getRemoteDevice(device.getAddress());
-                                
-                                Reader reader = new Reader(bluetoothDevice);
-                                reader.connect();
-                                commander.setReader(reader);
-                                
-                                // printResponders(callbackContext, "After connect");
-
-                                // PluginResult pluginResult = new
-                                // PluginResult(PluginResult.Status.OK,
-                                // "Trying to connect " + deviceID + "(" + bluetoothDevice.getName()
-                                // + ")");
-                                // pluginResult.setKeepCallback(true);
-                                // callbackContext.sendPluginResult(pluginResult);
-                                return;
+                        ArrayList<Reader> mReaders = ReaderManager.sharedInstance().getReaderList().list();
+                        if (mReaders.size() == 1) {
+                            mReader = mReaders.get(0);
+                        } else {
+                            for (Reader reader : mReaders) {
+                                if (reader) {
+                                    mReader = reader;
+                                }
                             }
                         }
+
+                        if(mReader != null){
+                            mReader.connect();
+                            commander.setReader(mReader);
+                            commander.connect();
+                            return;
+                        }
+
                         callbackContext.error("Device not found " + deviceID);
                     }
                 } else {
@@ -213,13 +152,6 @@ public class TSLScannerDevice implements ScannerDevice {
             dataAvailableCallback = null;
             commander.getReader().disconnect();
         }
-
-        // PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "Trying to
-        // disconnect");
-        // pluginResult.setKeepCallback(true);
-        // callbackContext.sendPluginResult(pluginResult);
-        LocalBroadcastManager.getInstance(context).unregisterReceiver(mCommanderMessageReceiver);
-
     }
 
     @Override
@@ -258,6 +190,22 @@ public class TSLScannerDevice implements ScannerDevice {
             removeSyncAndAddAsyncResponder();
         }
         // printResponders(callbackContext, "After getDeviceInfo");
+    }
+
+    @Override
+    public void getDeviceList(final CallbackContext callbackContext) {
+        checkForBluetoothPermission();
+        ReaderManager.sharedInstance().updateList();
+
+         ArrayList<Reader> mReaders = ReaderManager.sharedInstance().getReaderList().list();
+         JSONArray deviceList = new JSONArray();
+         for (Reader reader : mReaders) {
+            JSONObject deviceDetail = new JSONObject();
+            deviceDetail.put("name", reader.getDisplayName());
+            deviceDetail.put("deviceID", reader.getDisplayInfoLine());
+            deviceList.put(deviceDetail);
+         }
+         callbackContext.success(JSONUtil.createJSONObjectSuccessResponse(deviceList));
     }
 
     @Override
@@ -676,4 +624,164 @@ public class TSLScannerDevice implements ScannerDevice {
             callbackContext.sendPluginResult(pluginResult);
         }
     }
+
+    
+    //----------------------------------------------------------------------------------------------
+    // Bluetooth permissions checking
+    //----------------------------------------------------------------------------------------------
+
+    private void checkForBluetoothPermission()
+    {
+        // Older permissions are granted at install time
+        if (Build.VERSION.SDK_INT < 31 ) return;
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED
+            || ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED)
+        {
+            if (shouldShowRequestPermissionRationale(Manifest.permission.BLUETOOTH_CONNECT))
+            {
+                // In an educational UI, explain to the user why your app requires this
+                // permission for a specific feature to behave as expected. In this UI,
+                // include a "cancel" or "no thanks" button that allows the user to
+                // continue using your app without granting the permission.
+                offerBluetoothPermissionRationale();
+            }
+            else
+            {
+                requestPermissionLauncher.launch(bluetoothPermissions);
+            }
+        }
+    }
+
+    private final String[] bluetoothPermissions = new String[] { Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN};
+
+    void offerBluetoothPermissionRationale()
+    {
+        // Older permissions are granted at install time
+        if (Build.VERSION.SDK_INT < 31 ) return;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Permission is required to connect to TSL Readers over Bluetooth" )
+               .setTitle("Allow Bluetooth?");
+
+        builder.setPositiveButton("Show Permission Dialog", new DialogInterface.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.S)
+            public void onClick(DialogInterface dialog, int id)
+            {
+                requestPermissionLauncher.launch(new String[] { Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN});
+            }
+        });
+
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+
+    void showBluetoothPermissionDeniedConsequences()
+    {
+        // Note: When permissions have been denied, this will be invoked everytime checkForBluetoothPermission() is called
+        // In your app, we suggest you limit the number of times the User is notified.
+        appendMessage("\nThis app will not be able to connect to TSL Readers via Bluetooth.\n\nThis can be changed in Settings->Apps.\n" );
+    }
+
+
+    // Register the permissions callback, which handles the user's response to the
+    // system permissions dialog. Save the return value, an instance of
+    // ActivityResultLauncher, as an instance variable.
+    private final ActivityResultLauncher<String[]> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), permissionsGranted ->
+            {
+                //boolean allGranted = permissionsGranted.values().stream().reduce(true, Boolean::logicalAnd);
+                boolean allGranted = true;
+                for( boolean isGranted : permissionsGranted.values())
+                {
+                    allGranted = allGranted && isGranted;
+                }
+
+                if (allGranted)
+                {
+                    // Permission is granted. Continue the action or workflow in your
+                    // app.
+
+                    // Update the ReaderList which will add any unknown reader, firing events appropriately
+                    ReaderManager.sharedInstance().updateList();
+                }
+                else
+                {
+                    // Explain to the user that the feature is unavailable because the
+                    // features requires a permission that the user has denied. At the
+                    // same time, respect the user's decision. Don't link to system
+                    // settings in an effort to convince the user to change their
+                    // decision.
+                    showBluetoothPermissionDeniedConsequences();
+                }
+            });
+
+     //----------------------------------------------------------------------------------------------
+    // AsciiCommander message handling
+    //----------------------------------------------------------------------------------------------
+
+    //
+    // Handle the connection state change events from the AsciiCommander
+    //
+    private final Observable.Observer<String> mConnectionStateObserver = (observable, reason) ->
+    {
+        ConnectionState commanderConnectionState = getCommander().getConnectionState();
+        if(commanderConnectionState == ConnectionState.DISCONNECTED)
+        {
+            if (connectCallback != null) {
+                connectCallback.error(commander.getConnectionState().name());
+                connectCallback = null;
+            }
+            if (disconnectCallback != null) {
+                disconnectCallback.success("true");
+            }
+            
+            // A manual disconnect will have cleared mReader
+            if( mReader != null )
+            {
+                // See if this is from a failed connection attempt
+                if (!mReader.wasLastConnectSuccessful())
+                {
+                    // Unable to connect so have to choose reader again
+                    mReader = null;
+                }
+            }
+        }
+        else if( commanderConnectionState == ConnectionState.CONNECTED)
+        {
+      
+            if (connectCallback != null) {
+                removeAsyncAndAddSyncResponder();
+                if (commander.isConnected()) {
+                    VersionInformationCommand versionInfoCommand = VersionInformationCommand.synchronousCommand();
+                    commander.executeCommand(versionInfoCommand);
+                    
+                        if (versionInfoCommand.getManufacturer() == null || !(versionInfoCommand.getManufacturer()
+                                                                                            .toString()
+                                                                                            .contains("TSL")
+                                    || versionInfoCommand.getManufacturer()
+                                                            .toString()
+                                                            .contains("Technology Solutions"))) {
+                            commander.getReader().disconnect();
+                            connectCallback.error("Not a recognised device!");
+                        }else{
+                            InventoryCommand inventoryCommand = getInventoryInstance();
+                            inventoryCommand.setTakeNoAction(TriState.YES);
+                            commander.executeCommand(inventoryCommand);
+                            removeSyncAndAddAsyncResponder();
+                            connectCallback.success("true");
+                            connectCallback = null;
+                        }
+                            
+                    }else{
+                        connectCallback.error("Commander is not connected!");
+                    }
+            }
+
+
+
+        }
+    };
 }
