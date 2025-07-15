@@ -1,11 +1,11 @@
 repositories {
-jcenter()
+ jcenter()
  flatDir {
-      dirs 'libs'
+      dirs 'src/main/libs'
    }
 }
 dependencies {
-  implementation(name : 'Rfid.AsciiProtocol-1.4.5-release',ext:'aar')
+  implementation(name : 'Rfid.AsciiProtocol-3.5.0-release',ext:'aar')
 }
 
 
