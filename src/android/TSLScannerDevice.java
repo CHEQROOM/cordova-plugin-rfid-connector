@@ -13,6 +13,7 @@ import org.json.JSONObject;
 
 
 import com.uk.tsl.rfid.asciiprotocol.AsciiCommander;
+import com.uk.tsl.rfid.asciiprotocol.DeviceProperties;
 import com.uk.tsl.rfid.asciiprotocol.commands.BarcodeCommand;
 import com.uk.tsl.rfid.asciiprotocol.commands.BatteryStatusCommand;
 import com.uk.tsl.rfid.asciiprotocol.commands.InventoryCommand;
@@ -103,7 +104,7 @@ public class TSLScannerDevice implements ScannerDevice {
                             mReader = mReaders.get(0);
                         } else {
                             for (Reader reader : mReaders) {
-                                if (reader != null) {
+                                if (reader.getDisplayName().equals(deviceID)) {
                                     mReader = reader;
                                 }
                             }
@@ -205,10 +206,20 @@ public class TSLScannerDevice implements ScannerDevice {
             ArrayList<Reader> mReaders = ReaderManager.sharedInstance().getReaderList().list();
             JSONArray deviceList = new JSONArray();
             for (Reader reader : mReaders) {
-                JSONObject deviceDetail = new JSONObject();
-                deviceDetail.put("name", reader.getDisplayName());
-                deviceDetail.put("deviceID", reader.getDisplayInfoLine());
-                deviceList.put(deviceDetail);
+                DeviceProperties deviceProperties = reader.getDeviceProperties();
+                if(deviceProperties != null){
+                    VersionInformationCommand versionInfoCommand = deviceProperties.getInformationCommand();
+                    if(versionInfoCommand.getManufacturer() == null || !versionInfoCommand.getManufacturer().contains("TSL")){
+                        continue;
+                    }
+
+                    JSONObject deviceDetail = new JSONObject();
+                    deviceDetail.put("name", reader.getDisplayName());
+
+                    // also use displayname as deviceId for now
+                    deviceDetail.put("deviceID", reader.getDisplayName());
+                    deviceList.put(deviceDetail);
+                }
             }
             callbackContext.success(JSONUtil.createJSONObjectSuccessResponse(deviceList));
          } catch (JSONException ex) {
