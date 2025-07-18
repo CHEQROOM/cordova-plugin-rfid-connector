@@ -15,19 +15,17 @@
         <config-file target="AndroidManifest.xml" parent="/manifest">
             <uses-permission android:name="android.permission.BLUETOOTH" />
             <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+            <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+            <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
         </config-file>
-        <source-file src="src/cordova/plugin/rfidconnector/RFIDConnector.java" target-dir="src/cordova-plugin-rfidconnector/RFIDConnector" />
-        <source-file src="src/cordova/plugin/rfidconnector/ScannerDevice.java" target-dir="src/cordova-plugin-rfidconnector/RFIDConnector" />
-        <source-file src="src/cordova/plugin/rfidconnector/TSLScannerDevice.java" target-dir="src/cordova-plugin-rfidconnector/RFIDConnector" />
-        <source-file src="src/cordova/plugin/rfidconnector/ZebraScannerDevice.java" target-dir="src/cordova-plugin-rfidconnector/RFIDConnector" />
-        <source-file src="src/cordova/plugin/rfidconnector/ScannerDeviceFactory.java" target-dir="src/cordova-plugin-rfidconnector/RFIDConnector" />
-        <source-file src="src/cordova/plugin/rfidconnector/ConversionUtil.java" target-dir="src/cordova-plugin-rfidconnector/RFIDConnector" />
-        <source-file src="src/cordova/plugin/rfidconnector//JSONUtil.java" target-dir="src/cordova-plugin-rfidconnector/RFIDConnector" />
-        <source-file src="src/cordova/plugin/rfidconnector/ZebraEventHandler.java" target-dir="src/cordova-plugin-rfidconnector/RFIDConnector" />
-        <resource-file src="src/android/Rfid.AsciiProtocol-1.4.5-release.aar" target="libs/Rfid.AsciiProtocol-1.4.5-release.aar"/>
-		<resource-file src="src/android/barcode_scanner_library_v2.3.1.0.aar" target="libs/barcode_scanner_library_v2.3.1.0.aar"/>
-        <resource-file src="src/android/API3_LIB-release-2.0.0.2.aar" target="libs/API3_LIB-release-2.0.0.2.aar"/>
-        <framework src="src/android/RFIDConnector.gradle" custom="true" type="gradleReference" />
+        <source-file src="src/android/RFIDConnector.java" target-dir="src/cordova-plugin-rfidconnector" />
+        <source-file src="src/android/ScannerDevice.java" target-dir="src/cordova-plugin-rfidconnector" />
+        <source-file src="src/android/TSLScannerDevice.java" target-dir="src/cordova-plugin-rfidconnector" />
+        <source-file src="src/android/ScannerDeviceFactory.java" target-dir="src/cordova-plugin-rfidconnector" />
+        <source-file src="src/android/ConversionUtil.java" target-dir="src/cordova-plugin-rfidconnector" />
+        <source-file src="src/android/JSONUtil.java" target-dir="src/cordova-plugin-rfidconnector" />
+        <resource-file src="src/android/Rfid.AsciiProtocol-Library/Rfid.AsciiProtocol-3.5.0-release.aar" target="libs/Rfid.AsciiProtocol-3.5.0-release.aar"/>
+		<framework src="src/android/RFIDConnector.gradle" custom="true" type="gradleReference" />
     </platform>
     <platform name="ios">
         <config-file parent="/*" target="config.xml">
@@ -38,17 +36,11 @@
         <config-file target="*-Info.plist" parent="UISupportedExternalAccessoryProtocols">
             <array>
                 <string>com.uk.tsl.rfid</string>
-                <string>com.zebra.scanner.SSI</string>
-                <string>com.zebra.rfd8X00_easytext</string>
-                <string>com.symbol.rfd8X00_easytext</string>
             </array>
         </config-file>
           <source-file src="src/ios/RFIDConnector.m" />
   	      <framework src="src/ios/TSLAsciiCommands.framework" custom="true" embed="false" />
-          <framework src="src/ios/symbolbt-sdk.framework" custom="true" embed="false" />
-          <framework src="src/ios/symbolrfid-sdk.framework" custom="true" embed="false" />
-  		<!--<framework src="ExternalAccessory.framework" custom="true" />-->
-  		    <framework src="Foundation.framework" weak="true" />
+  		  <framework src="Foundation.framework" weak="true" />
           <framework src="CoreGraphics.framework" weak="true" />
           <framework src="UIKit.framework" weak="true" />
           <framework src="SystemConfiguration.framework" weak="true" />
