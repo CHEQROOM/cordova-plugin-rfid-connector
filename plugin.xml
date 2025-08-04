@@ -26,7 +26,20 @@
         <source-file src="src/android/JSONUtil.java" target-dir="src/cordova-plugin-rfidconnector" />
         <source-file src="src/android/ZebraScannerDevice.java" target-dir="src/cordova-plugin-rfidconnector" />
         <resource-file src="src/android/Rfid.AsciiProtocol-Library/Rfid.AsciiProtocol-3.5.0-release.aar" target="libs/Rfid.AsciiProtocol-3.5.0-release.aar"/>
-        <resource-file src="src/android/Zebra/barcode_scanner_library_v2.6.29.0-release.aar" target="libs/barcode_scanner_library_v2.6.29.0-release.aar"/>
+        <resource-file src="src/android/Zebra/BarcodeScannerLibrary-release-28.aar" target="libs/BarcodeScannerLibrary-release-28.aar"/>
+        <resource-file src="src/android/Zebra/API3_ASCII-release-2.0.4.192.aar" target="libs/API3_ASCII-release-2.0.4.192.aar"/>
+        <resource-file src="src/android/Zebra/API3_CMN-release-2.0.4.192.aar" target="libs/API3_CMN-release-2.0.4.192.aar"/>
+        <resource-file src="src/android/Zebra/API3_INTERFACE-release-2.0.4.192.aar" target="libs/API3_INTERFACE-release-2.0.4.192.aar"/>
+        <resource-file src="src/android/Zebra/API3_LLRP-release-2.0.4.192.aar" target="libs/API3_LLRP-release-2.0.4.192.aar"/>
+        <resource-file src="src/android/Zebra/API3_NGE-protocolrelease-2.0.4.192.aar" target="libs/API3_NGE-protocolrelease-2.0.4.192.aar"/>
+        <resource-file src="src/android/Zebra/API3_NGE-Transportrelease-2.0.4.192.aar" target="libs/API3_NGE-Transportrelease-2.0.4.192.aar"/>
+        <resource-file src="src/android/Zebra/API3_NGEUSB-Transportrelease-2.0.4.192.aar" target="libs/API3_NGEUSB-Transportrelease-2.0.4.192.aar"/>
+        <resource-file src="src/android/Zebra/API3_READER-release-2.0.4.192.aar" target="libs/API3_READER-release-2.0.4.192.aar"/>
+        <resource-file src="src/android/Zebra/API3_TRANSPORT-release-2.0.4.192.aar" target="libs/API3_TRANSPORT-release-2.0.4.192.aar"/>
+        <resource-file src="src/android/Zebra/API3_ZIOTC-release-null.aar" target="libs/API3_ZIOTC-release-null.aar"/>
+        <resource-file src="src/android/Zebra/API3_ZIOTCTRANSPORT-release-2.0.4.192.aar" target="libs/API3_ZIOTCTRANSPORT-release-2.0.4.192.aar"/>
+        <resource-file src="src/android/Zebra/rfidhostlib.aar" target="libs/rfidhostlib.aar"/>
+        <resource-file src="src/android/Zebra/rfidseriallib.aar" target="libs/rfidseriallib.aar"/>
 		<framework src="src/android/RFIDConnector.gradle" custom="true" type="gradleReference" />
     </platform>
     <platform name="ios">
