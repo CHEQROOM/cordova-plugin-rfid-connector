@@ -6,7 +6,20 @@ repositories {
 }
 dependencies {
   implementation(name : 'Rfid.AsciiProtocol-3.5.0-release',ext:'aar')
-  implementation(name : 'barcode_scanner_library_v2.6.29.0-release',ext:'aar')
+  implementation(name : 'BarcodeScannerLibrary-release-28',ext:'aar')
+  implementation(name : 'API3_ASCII-release-2.0.4.192',ext:'aar')
+  implementation(name : 'API3_CMN-release-2.0.4.192',ext:'aar')
+  implementation(name : 'API3_INTERFACE-release-2.0.4.192',ext:'aar')
+  implementation(name : 'API3_LLRP-release-2.0.4.192',ext:'aar')
+  implementation(name : 'API3_NGE-protocolrelease-2.0.4.192',ext:'aar')
+  implementation(name : 'API3_NGE-Transportrelease-2.0.4.192',ext:'aar')
+  implementation(name : 'API3_NGEUSB-Transportrelease-2.0.4.192',ext:'aar')
+  implementation(name : 'API3_READER-release-2.0.4.192',ext:'aar')
+  implementation(name : 'API3_TRANSPORT-release-2.0.4.192',ext:'aar')
+  implementation(name : 'API3_ZIOTC-release-null',ext:'aar')
+  implementation(name : 'API3_ZIOTCTRANSPORT-release-2.0.4.192',ext:'aar')
+  implementation(name : 'rfidhostlib',ext:'aar')
+  implementation(name : 'rfidseriallib',ext:'aar')
 }
 
 
