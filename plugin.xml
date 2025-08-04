@@ -24,7 +24,9 @@
         <source-file src="src/android/ScannerDeviceFactory.java" target-dir="src/cordova-plugin-rfidconnector" />
         <source-file src="src/android/ConversionUtil.java" target-dir="src/cordova-plugin-rfidconnector" />
         <source-file src="src/android/JSONUtil.java" target-dir="src/cordova-plugin-rfidconnector" />
+        <source-file src="src/android/ZebraScannerDevice.java" target-dir="src/cordova-plugin-rfidconnector" />
         <resource-file src="src/android/Rfid.AsciiProtocol-Library/Rfid.AsciiProtocol-3.5.0-release.aar" target="libs/Rfid.AsciiProtocol-3.5.0-release.aar"/>
+        <resource-file src="src/android/Zebra/barcode_scanner_library_v2.6.29.0-release.aar" target="libs/barcode_scanner_library_v2.6.29.0-release.aar"/>
 		<framework src="src/android/RFIDConnector.gradle" custom="true" type="gradleReference" />
     </platform>
     <platform name="ios">
