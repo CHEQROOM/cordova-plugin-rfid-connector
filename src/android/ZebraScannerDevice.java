@@ -6,6 +6,7 @@ import java.util.Set;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.PluginResult;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -314,6 +315,63 @@ public class ZebraScannerDevice implements ScannerDevice {
             });
         } else {
             callbackContext.error(DEVICE_IS_NOT_CONNECTED);
+        }
+    }
+
+    @Override
+    public void getDeviceList(final CallbackContext callbackContext) {
+        try {
+            JSONArray deviceList = new JSONArray();
+            
+            // Get RFID devices
+            try {
+                ArrayList<ReaderDevice> availableRFIDReaderList = RFIDReader.GetAvailableRFIDReaderList();
+                
+                for (int i = 0; i < availableRFIDReaderList.size(); i++) {
+                    ReaderDevice device = availableRFIDReaderList.get(i);
+                    JSONObject deviceDetail = new JSONObject();
+                    deviceDetail.put("name", device.getName());
+                    deviceDetail.put("deviceID", device.getAddress());
+                    deviceDetail.put("type", "RFID");
+                    deviceList.put(deviceDetail);
+                }
+            } catch (InvalidUsageException e) {
+                Log.e("RFID", "Invalid usage: " + e.getMessage());
+            } catch (Exception e) {
+                Log.e("RFID", "RFID error: " + e.getMessage());
+            }
+            
+            // Get Barcode devices
+            try {
+                if (sdkHandler == null) {
+                    sdkHandler = new SDKHandler(context);
+                }
+                
+                ArrayList<DCSScannerInfo> availableBarcodeScanners = new ArrayList<>();
+                DCSSDK_RESULT resultCode = sdkHandler.dcssdkGetAvailableScannersList(availableBarcodeScanners);
+                
+                if (resultCode == DCSSDK_RESULT.DCSSDK_RESULT_SUCCESS) {
+                    for (int i = 0; i < availableBarcodeScanners.size(); i++) {
+                        DCSScannerInfo scanner = availableBarcodeScanners.get(i);
+                        JSONObject deviceDetail = new JSONObject();
+                        deviceDetail.put("name", scanner.getScannerName());
+                        deviceDetail.put("deviceID", scanner.getScannerID());
+                        deviceDetail.put("type", "BARCODE");
+                        deviceList.put(deviceDetail);
+                    }
+                } else {
+                    Log.e("BARCODE", "Failed to get barcode scanners: " + resultCode.toString());
+                }
+            } catch (Exception e) {
+                Log.e("BARCODE", "Barcode error: " + e.getMessage());
+            }
+            
+            callbackContext.success(JSONUtil.createJSONObjectSuccessResponse(deviceList));
+            
+        } catch (JSONException e) {
+            callbackContext.error("Error creating device list response: " + e.getMessage());
+        } catch (Exception e) {
+            callbackContext.error("Error getting device list: " + e.getMessage());
         }
     }
 

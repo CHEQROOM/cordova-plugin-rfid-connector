@@ -20,6 +20,8 @@ public class ScannerDeviceFactory {
     public static ScannerDevice getInstance(CordovaPlugin rfidConnector, String aDeviceType) {
         if ("TSL".equals(aDeviceType)) {
             return new TSLScannerDevice(rfidConnector);
+        } else if ("ZEBRA".equals(aDeviceType)) {
+            return new ZebraScannerDevice(rfidConnector);
         } else {
             return null;
         }
