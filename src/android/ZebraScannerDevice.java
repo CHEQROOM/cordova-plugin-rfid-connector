@@ -17,6 +17,7 @@ import com.zebra.rfid.api3.OperationFailureException;
 import com.zebra.rfid.api3.RFIDReader;
 import com.zebra.rfid.api3.ReaderDevice;
 import com.zebra.rfid.api3.RfidReadEvents;
+import com.zebra.rfid.api3.Readers;
 import com.zebra.scannercontrol.DCSSDKDefs;
 import com.zebra.scannercontrol.DCSSDKDefs.DCSSDK_RESULT;
 import com.zebra.scannercontrol.DCSScannerInfo;
@@ -49,6 +50,7 @@ public class ZebraScannerDevice implements ScannerDevice {
     private CordovaPlugin rfidConnector;
     private Context context;
     private ReaderDevice rfidReaderDevice = null;
+    private SDKHandler sdkHandler;
     
     public ZebraScannerDevice(final CordovaPlugin rfidConnector) {
         this.rfidConnector = rfidConnector;
@@ -296,7 +298,8 @@ public class ZebraScannerDevice implements ScannerDevice {
             
             // Get RFID devices
             try {
-                ArrayList<ReaderDevice> availableRFIDReaderList = RFIDReader.GetAvailableRFIDReaderList();
+                Readers readers = new Readers();
+                ArrayList<ReaderDevice> availableRFIDReaderList = readers.GetAvailableRFIDReaderList();
                 
                 for (int i = 0; i < availableRFIDReaderList.size(); i++) {
                     ReaderDevice device = availableRFIDReaderList.get(i);
@@ -339,8 +342,6 @@ public class ZebraScannerDevice implements ScannerDevice {
             
             callbackContext.success(JSONUtil.createJSONObjectSuccessResponse(deviceList));
             
-        } catch (JSONException e) {
-            callbackContext.error("Error creating device list response: " + e.getMessage());
         } catch (Exception e) {
             callbackContext.error("Error getting device list: " + e.getMessage());
         }

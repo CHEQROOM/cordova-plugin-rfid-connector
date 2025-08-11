@@ -1,3 +1,5 @@
+//https://techdocs.zebra.com/dcs/scanners/sdk-android/dev-guide/
+
 package cordova.plugin.rfidconnector;
 
 import java.util.Set;
@@ -23,7 +25,11 @@ public class RFIDConnector extends CordovaPlugin {
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        ScannerDevice scannerDevice = ScannerDeviceFactory.getInstance(this, "TSL");
+        if ("connect".equals(action) || "getDeviceList".equals(action)) {
+            deviceType = args.getString(0);
+        }
+
+        ScannerDevice scannerDevice = ScannerDeviceFactory.getInstance(this, deviceType);
 
          if ("getDeviceList".equals(action)) {
             if (!hasBluetoothPermissions()) {
