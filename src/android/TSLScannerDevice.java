@@ -36,8 +36,6 @@ import com.uk.tsl.utils.Observable;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Handler;
-import android.os.Looper;
 
 public class TSLScannerDevice implements ScannerDevice {
 
@@ -90,9 +88,7 @@ public class TSLScannerDevice implements ScannerDevice {
     public void connect(final String deviceID, final CallbackContext callbackContext) {
         connectCallback = callbackContext;
         
-        // printResponders(callbackContext, "Before connect");
-        Handler handler = new Handler(Looper.getMainLooper());
-        handler.post(new Runnable() {
+        rfidConnector.cordova.getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 if (deviceID != null && deviceID.length() > 0) {
