@@ -52,8 +52,7 @@ public class TSLScannerDevice implements ScannerDevice {
     private static final String BATTERY_LEVEL = "batteryLevel";
     private static final String DEVICE_NAME = "deviceName";
     private static final String DEVICE_IS_NOT_CONNECTED = "Device is not connected.";
-    private static AsciiCommander commander;
-    private CordovaPlugin rfidConnector;
+    final CordovaPlugin rfidConnector;
     final Context context;
     private static CallbackContext dataAvailableCallback;
     private static InventoryCommand mInventoryCommand;
@@ -70,11 +69,11 @@ public class TSLScannerDevice implements ScannerDevice {
 
     public TSLScannerDevice(final CordovaPlugin rfidConnector) {
         this.rfidConnector = rfidConnector;
-        this.context = rfidConnector.cordova.getActivity().getBaseContext();
+        this.context = rfidConnector.cordova.getActivity().getApplicationContext();
 
         AsciiCommander.createSharedInstance(this.context);
 
-        this.commander = getCommander();
+        final AsciiCommander commander = getCommander();
         mInventoryCommand = getInventoryInstance();
 
         ReaderManager.create(this.context);
@@ -92,7 +91,7 @@ public class TSLScannerDevice implements ScannerDevice {
             @Override
             public void run() {
                 if (deviceID != null && deviceID.length() > 0) {
-                    if (commander.isConnected()) {
+                    if (getCommander().isConnected()) {
                         callbackContext.error(DEVICE_IS_ALREADY_CONNECTED);
                     } else {
                         ArrayList<Reader> mReaders = ReaderManager.sharedInstance().getReaderList().list();
@@ -125,9 +124,9 @@ public class TSLScannerDevice implements ScannerDevice {
     public void isConnected(final CallbackContext callbackContext) {
     
         removeAsyncAndAddSyncResponder();
-        if (commander.isConnected()) {
+        if (getCommander().isConnected()) {
                  VersionInformationCommand versionInfoCommand = VersionInformationCommand.synchronousCommand();
-                commander.executeCommand(versionInfoCommand);
+                getCommander().executeCommand(versionInfoCommand);
                  if(versionInfoCommand.getManufacturer() == null || !versionInfoCommand.getManufacturer().toString().contains("TSL")){
                     callbackContext.error("This not a recognised device!");
                  }else{
@@ -143,7 +142,7 @@ public class TSLScannerDevice implements ScannerDevice {
     @Override
     public void disconnect(final CallbackContext callbackContext) {
         disconnectCallback = callbackContext;
-        if (commander.isConnected()) {
+        if (getCommander().isConnected()) {
             removeAsyncResponders();
 
             inventorySearchResponder = null;
@@ -152,7 +151,7 @@ public class TSLScannerDevice implements ScannerDevice {
             inventoryResponder = null;
             barcodeResponder = null;
             dataAvailableCallback = null;
-            commander.getReader().disconnect();
+            getCommander().getReader().disconnect();
         }
     }
 
@@ -161,24 +160,24 @@ public class TSLScannerDevice implements ScannerDevice {
         // printResponders(callbackContext, "Before getDeviceInfo");
         try {
             removeAsyncAndAddSyncResponder();
-            if (commander.isConnected()) {
+            if (getCommander().isConnected()) {
                 JSONObject deviceInfo = new JSONObject();
                 BatteryStatusCommand status = BatteryStatusCommand.synchronousCommand();
-                commander.executeCommand(status);
+                getCommander().executeCommand(status);
 
-                deviceInfo.put(DEVICE_NAME, commander.getConnectedDeviceName());
+                deviceInfo.put(DEVICE_NAME, getCommander().getConnectedDeviceName());
                 deviceInfo.put(BATTERY_LEVEL, status.getBatteryLevel());
                 deviceInfo.put(BATTERY_STATUS, status.getChargeStatus() == null ? " " : status.getChargeStatus().getDescription());
 
                 VersionInformationCommand versionInfoCommand = VersionInformationCommand.synchronousCommand();
-                commander.executeCommand(versionInfoCommand);
+                getCommander().executeCommand(versionInfoCommand);
 
                 deviceInfo.put(HARDWARE_VERSION, "N.A.");
                 deviceInfo.put(FIRMWARE_VERSION, versionInfoCommand.getFirmwareVersion() == null ? " " : versionInfoCommand.getFirmwareVersion());
                 deviceInfo.put(MANUFACTURER, versionInfoCommand.getManufacturer() == null ? " " : versionInfoCommand.getManufacturer());
                 deviceInfo.put(SERIAL_NUMBER, versionInfoCommand.getSerialNumber() == null ? " " : versionInfoCommand.getSerialNumber());
-                deviceInfo.put(ANTENNA_MIN, commander.getDeviceProperties().getMinimumCarrierPower());
-                deviceInfo.put(ANTENNA_MAX, commander.getDeviceProperties().getMaximumCarrierPower());
+                deviceInfo.put(ANTENNA_MIN, getCommander().getDeviceProperties().getMinimumCarrierPower());
+                deviceInfo.put(ANTENNA_MAX, getCommander().getDeviceProperties().getMaximumCarrierPower());
                 deviceInfo.put(SCAN_POWER, getInventoryInstance().getOutputPower());
 
                 callbackContext.success(JSONUtil.createJSONObjectSuccessResponse(deviceInfo));
@@ -228,7 +227,7 @@ public class TSLScannerDevice implements ScannerDevice {
         // printResponders(callbackContext, "Before scanRFIDs");
         try {
             removeAsyncAndAddSyncResponder();
-            if (commander.isConnected()) {
+            if (getCommander().isConnected()) {
                 final JSONArray data = new JSONArray();
 
                 InventoryCommand inventoryCommand = getInventoryInstance();
@@ -255,7 +254,7 @@ public class TSLScannerDevice implements ScannerDevice {
                     }
                 });
 
-                commander.executeCommand(inventoryCommand);
+                getCommander().executeCommand(inventoryCommand);
 
                 callbackContext.success(JSONUtil.createJSONObjectSuccessResponse(data));
 
@@ -275,7 +274,7 @@ public class TSLScannerDevice implements ScannerDevice {
         // printResponders(callbackContext, "Before search");
         try {
             removeAsyncAndAddSyncResponder();
-            if (commander.isConnected() && tagID != null) {
+            if (getCommander().isConnected() && tagID != null) {
                 final JSONArray data = new JSONArray();
 
                 InventoryCommand inventoryCommand = getInventoryInstance();
@@ -327,7 +326,7 @@ public class TSLScannerDevice implements ScannerDevice {
                     }
                 });
 
-                commander.executeCommand(inventoryCommand);
+                getCommander().executeCommand(inventoryCommand);
                 callbackContext.success(JSONUtil.createJSONObjectSuccessResponse(data));
 
             } else {
@@ -345,7 +344,7 @@ public class TSLScannerDevice implements ScannerDevice {
     public void startSearch(final String tagID, final boolean useAscii, final CallbackContext callbackContext) {
         // printResponders(callbackContext, "Before startSearch");
         try {
-            if (commander.isConnected() && searchCallback == null) {
+            if (getCommander().isConnected() && searchCallback == null) {
                 searchCallback = callbackContext;
                 removeAsyncResponders();
                 // Inventory responder
@@ -405,14 +404,14 @@ public class TSLScannerDevice implements ScannerDevice {
                         }
                     });
 
-                    commander.addResponder(inventorySearchResponder);
+                    getCommander().addResponder(inventorySearchResponder);
                     // commander.executeCommand(inventorySearchResponder);
                 }
 
                 PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "SEARCH ACTIVATED");
                 pluginResult.setKeepCallback(true);
                 callbackContext.sendPluginResult(pluginResult);
-            } else if (commander.isConnected()) {
+            } else if (getCommander().isConnected()) {
                 callbackContext.error(JSONUtil.createJSONObjectErrorResponse("SEARCH IS ALREADY ACTIVATED"));
             } else {
                 callbackContext.error(JSONUtil.createJSONObjectErrorResponse(DEVICE_IS_NOT_CONNECTED));
@@ -427,9 +426,9 @@ public class TSLScannerDevice implements ScannerDevice {
     public void stopSearch(final CallbackContext callbackContext) {
         // printResponders(callbackContext, "Before stopSearch");
         try {
-            if (commander.isConnected()) {
+            if (getCommander().isConnected()) {
                 if (inventorySearchResponder != null) {
-                    commander.removeResponder(inventorySearchResponder);
+                    getCommander().removeResponder(inventorySearchResponder);
                     PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "REMOVING SEARCH RESPONDER");
                     pluginResult.setKeepCallback(true);
                     callbackContext.sendPluginResult(pluginResult);
@@ -454,9 +453,9 @@ public class TSLScannerDevice implements ScannerDevice {
     public void setOutputPower(final int powerValue, final CallbackContext callbackContext) {
         try {
             removeAsyncAndAddSyncResponder();
-            if (commander.isConnected()) {
-                int minPower = commander.getDeviceProperties().getMinimumCarrierPower();
-                int maxPower = commander.getDeviceProperties().getMaximumCarrierPower();
+            if (getCommander().isConnected()) {
+                int minPower = getCommander().getDeviceProperties().getMinimumCarrierPower();
+                int maxPower = getCommander().getDeviceProperties().getMaximumCarrierPower();
 
                 if (powerValue >= minPower && powerValue <= maxPower) {
                     InventoryCommand mInventoryCommand = getInventoryInstance();
@@ -471,7 +470,7 @@ public class TSLScannerDevice implements ScannerDevice {
                     mInventoryCommand.setTakeNoAction(TriState.YES);
                     mInventoryCommand.setOutputPower(powerValue);
 
-                    commander.executeCommand(mInventoryCommand);
+                    getCommander().executeCommand(mInventoryCommand);
 
                     callbackContext.success("Scan power set from " + oldPower + " to " + powerValue);
                 } else {
@@ -491,7 +490,7 @@ public class TSLScannerDevice implements ScannerDevice {
     public void subscribeScanner(final boolean useASCII, final CallbackContext callbackContext) {
         // printResponders(callbackContext, "Before subscribeScanner");
         try {
-            if (commander.isConnected() && dataAvailableCallback == null) {
+            if (getCommander().isConnected() && dataAvailableCallback == null) {
                 dataAvailableCallback = callbackContext;
 
                 // Inventory responder
@@ -527,7 +526,7 @@ public class TSLScannerDevice implements ScannerDevice {
                         }
                     });
 
-                    commander.addResponder(inventoryResponder);
+                    getCommander().addResponder(inventoryResponder);
                 }
 
                 if (barcodeResponder == null) {
@@ -549,12 +548,12 @@ public class TSLScannerDevice implements ScannerDevice {
                             }
                         };
                     });
-                    commander.addResponder(barcodeResponder);
+                    getCommander().addResponder(barcodeResponder);
                 }
                 PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "SUBSCRIBED TO SCANNER.");
                 pluginResult.setKeepCallback(true);
                 callbackContext.sendPluginResult(pluginResult);
-            } else if (commander.isConnected()) {
+            } else if (getCommander().isConnected()) {
                 callbackContext.error(JSONUtil.createJSONObjectErrorResponse("DEVICE IS ALREADY SUBSCRIBED."));
             } else {
                 callbackContext.error(JSONUtil.createJSONObjectErrorResponse(DEVICE_IS_NOT_CONNECTED));
@@ -569,7 +568,7 @@ public class TSLScannerDevice implements ScannerDevice {
     public void unsubscribeScanner(final CallbackContext callbackContext) {
         // printResponders(callbackContext, "Before unsubscribeScanner");
         try {
-            if (commander.isConnected()) {
+            if (getCommander().isConnected()) {
                 removeAsyncResponders();
                 inventoryResponder = null;
                 barcodeResponder = null;
@@ -602,21 +601,21 @@ public class TSLScannerDevice implements ScannerDevice {
 
     private void removeAsyncAndAddSyncResponder() {
         removeAsyncResponders();
-        commander.addSynchronousResponder();
+        getCommander().addSynchronousResponder();
     }
 
     private void removeSyncAndAddAsyncResponder() {
-        commander.removeSynchronousResponder();
+        getCommander().removeSynchronousResponder();
         addAsyncResponders();
     }
 
     private void removeAsyncResponders() {
         if (dataAvailableCallback != null) {
             if (inventoryResponder != null) {
-                commander.removeResponder(inventoryResponder);
+                getCommander().removeResponder(inventoryResponder);
             }
             if (barcodeResponder != null) {
-                commander.removeResponder(barcodeResponder);
+                getCommander().removeResponder(barcodeResponder);
             }
         }
     }
@@ -624,16 +623,16 @@ public class TSLScannerDevice implements ScannerDevice {
     private void addAsyncResponders() {
         if (dataAvailableCallback != null) {
             if (inventoryResponder != null) {
-                commander.addResponder(inventoryResponder);
+                getCommander().addResponder(inventoryResponder);
             }
             if (barcodeResponder != null) {
-                commander.addResponder(barcodeResponder);
+                getCommander().addResponder(barcodeResponder);
             }
         }
     }
 
     private void printResponders(final CallbackContext callbackContext, final String message) {
-        for (IAsciiCommandResponder responder : commander.getResponderChain()) {
+        for (IAsciiCommandResponder responder : getCommander().getResponderChain()) {
             PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, message + " ***RRRR*** " + responder.toString());
             pluginResult.setKeepCallback(true);
             callbackContext.sendPluginResult(pluginResult);
@@ -653,7 +652,7 @@ public class TSLScannerDevice implements ScannerDevice {
         if(commanderConnectionState == ConnectionState.DISCONNECTED)
         {
             if (connectCallback != null) {
-                connectCallback.error(commander.getConnectionState().name());
+                connectCallback.error(getCommander().getConnectionState().name());
                 connectCallback = null;
             }
             if (disconnectCallback != null) {
@@ -676,9 +675,9 @@ public class TSLScannerDevice implements ScannerDevice {
       
             if (connectCallback != null) {
                 removeAsyncAndAddSyncResponder();
-                if (commander.isConnected()) {
+                    if (getCommander().isConnected()) {
                     VersionInformationCommand versionInfoCommand = VersionInformationCommand.synchronousCommand();
-                    commander.executeCommand(versionInfoCommand);
+                    getCommander().executeCommand(versionInfoCommand);
                     
                         if (versionInfoCommand.getManufacturer() == null || !(versionInfoCommand.getManufacturer()
                                                                                             .toString()
@@ -686,12 +685,12 @@ public class TSLScannerDevice implements ScannerDevice {
                                     || versionInfoCommand.getManufacturer()
                                                             .toString()
                                                             .contains("Technology Solutions"))) {
-                            commander.getReader().disconnect();
+                            getCommander().getReader().disconnect();
                             connectCallback.error("Not a recognised device!");
                         }else{
                             InventoryCommand inventoryCommand = getInventoryInstance();
                             inventoryCommand.setTakeNoAction(TriState.YES);
-                            commander.executeCommand(inventoryCommand);
+                            getCommander().executeCommand(inventoryCommand);
                             removeSyncAndAddAsyncResponder();
                             connectCallback.success("true");
                             connectCallback = null;
