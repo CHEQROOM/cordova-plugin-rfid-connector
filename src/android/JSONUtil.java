@@ -17,12 +17,12 @@ public class JSONUtil {
 
     }
 
-    public static JSONObject createJSONObjectResponse(boolean status, final String errorMsg, Object json) throws JSONException {
+    public static string createJSONObjectResponse(boolean status, final String errorMsg, Object json) throws JSONException {
         JSONObject result = new JSONObject();
         result.put("status", status);
         result.put("errorMsg", errorMsg);
         result.put("data", json);
-        return result;
+        return result.toString();
     }
 
     public static JSONObject createJSONObjectResponse(boolean status, final String message) throws JSONException {
