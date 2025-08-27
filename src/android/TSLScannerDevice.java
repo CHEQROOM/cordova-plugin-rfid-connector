@@ -201,20 +201,12 @@ public class TSLScannerDevice implements ScannerDevice {
             ArrayList<Reader> mReaders = ReaderManager.sharedInstance().getReaderList().list();
             JSONArray deviceList = new JSONArray();
             for (Reader reader : mReaders) {
-                DeviceProperties deviceProperties = reader.getDeviceProperties();
-                if(deviceProperties != null){
-                    VersionInformationCommand versionInfoCommand = deviceProperties.getInformationCommand();
-                    if(versionInfoCommand.getManufacturer() == null || !versionInfoCommand.getManufacturer().contains("TSL")){
-                        continue;
-                    }
+                JSONObject deviceDetail = new JSONObject();
+                deviceDetail.put("name", reader.getDisplayName());
 
-                    JSONObject deviceDetail = new JSONObject();
-                    deviceDetail.put("name", reader.getDisplayName());
-
-                    // also use displayname as deviceId for now
-                    deviceDetail.put("deviceID", reader.getDisplayName());
-                    deviceList.put(deviceDetail);
-                }
+                // also use displayname as deviceId for now
+                deviceDetail.put("deviceID", reader.getDisplayName());
+                deviceList.put(deviceDetail);
             }
             callbackContext.success(JSONUtil.createJSONObjectSuccessResponse(deviceList));
          } catch (JSONException ex) {
