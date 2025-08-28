@@ -452,7 +452,7 @@ public class TSLScannerDevice implements ScannerDevice {
                     // commander.executeCommand(inventorySearchResponder);
                 }
 
-                PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "SEARCH ACTIVATED");
+                PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, JSONUtil.createJSONObjectSuccessResponse("true"));
                 pluginResult.setKeepCallback(true);
                 callbackContext.sendPluginResult(pluginResult);
             } else if (getCommander().isConnected()) {
@@ -473,7 +473,7 @@ public class TSLScannerDevice implements ScannerDevice {
             if (getCommander().isConnected()) {
                 if (inventorySearchResponder != null) {
                     getCommander().removeResponder(inventorySearchResponder);
-                    PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "REMOVING SEARCH RESPONDER");
+                    PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, JSONUtil.createJSONObjectSuccessResponse("true"));
                     pluginResult.setKeepCallback(true);
                     callbackContext.sendPluginResult(pluginResult);
                 }
@@ -481,7 +481,7 @@ public class TSLScannerDevice implements ScannerDevice {
                 searchCallback = null;
                 addAsyncResponders();
 
-                PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "SEARCH DEACTIVATED");
+                PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, JSONUtil.createJSONObjectSuccessResponse("true"));
                 // pluginResult.setKeepCallback(true);
                 callbackContext.sendPluginResult(pluginResult);
             } else {
@@ -516,12 +516,12 @@ public class TSLScannerDevice implements ScannerDevice {
 
                     getCommander().executeCommand(mInventoryCommand);
 
-                    callbackContext.success("Scan power set from " + oldPower + " to " + powerValue);
+                    callbackContext.success(JSONUtil.createJSONObjectResponse("true", "Scan power set from " + oldPower + " to " + powerValue));
                 } else {
                     callbackContext.error("Scan power " + powerValue + " is not in device range(" + minPower + " to " + maxPower + ")");
                 }
             } else {
-                callbackContext.error(JSONUtil.createJSONObjectErrorResponse(DEVICE_IS_NOT_CONNECTED));
+                callbackContext.error(DEVICE_IS_NOT_CONNECTED);
             }
         } catch (JSONException ex) {
             callbackContext.error(ERROR_LABEL + ex.getMessage());
@@ -559,7 +559,7 @@ public class TSLScannerDevice implements ScannerDevice {
                                         data.put(rfidObject);
                                     }
                                     PluginResult pluginResult = new PluginResult(PluginResult.Status.OK,
-                                                    JSONUtil.createJSONObjectSuccessResponse(data));
+                                                    JSONUtil.createJSONObjectSuccessResponse("subscribing", data));
                                     pluginResult.setKeepCallback(true);
                                     dataAvailableCallback.sendPluginResult(pluginResult);
                                     dataList.clear();
@@ -594,7 +594,7 @@ public class TSLScannerDevice implements ScannerDevice {
                     });
                     getCommander().addResponder(barcodeResponder);
                 }
-                PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "SUBSCRIBED TO SCANNER.");
+                PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, JSONUtil.createJSONObjectSuccessResponse("true"));
                 pluginResult.setKeepCallback(true);
                 callbackContext.sendPluginResult(pluginResult);
             } else if (getCommander().isConnected()) {
@@ -617,7 +617,7 @@ public class TSLScannerDevice implements ScannerDevice {
                 inventoryResponder = null;
                 barcodeResponder = null;
                 dataAvailableCallback = null;
-                callbackContext.success("RESPONDERS REMOVED.");
+                callbackContext.success("true");
             } else {
                 callbackContext.error(JSONUtil.createJSONObjectErrorResponse(DEVICE_IS_NOT_CONNECTED));
             }
