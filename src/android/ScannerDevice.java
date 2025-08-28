@@ -5,6 +5,10 @@ import org.apache.cordova.CallbackContext;
 
 public interface ScannerDevice {
 
+    void onDestroy();
+    void onPause();
+    void onResume();
+
     /**
      * @param deviceAddress
      * @param callbackContext

@@ -20,10 +20,18 @@ public class RFIDConnector extends CordovaPlugin {
     private CallbackContext permissionCallbackContext;
     private String pendingAction;
     private JSONArray pendingArgs;
+    private ScannerDevice scannerDevice;
+
+    private ScannerDevice getScannerDevice() {
+        if (scannerDevice == null) {
+            scannerDevice = ScannerDeviceFactory.getInstance(this, "TSL");
+        }
+        return scannerDevice;
+    }
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        ScannerDevice scannerDevice = ScannerDeviceFactory.getInstance(this, "TSL");
+        ScannerDevice scannerDevice = getScannerDevice();
 
          if ("getDeviceList".equals(action)) {
             if (!hasBluetoothPermissions()) {
@@ -62,6 +70,21 @@ public class RFIDConnector extends CordovaPlugin {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public void onDestroy() {
+        getScannerDevice().onDestroy();
+    }
+
+    @Override
+    public void onPause() {
+        getScannerDevice().onPause();
+    }
+
+    @Override
+    public void onResume() {
+        getScannerDevice().onResume();
     }
 
      /**

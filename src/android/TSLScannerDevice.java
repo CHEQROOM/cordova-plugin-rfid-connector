@@ -13,13 +13,15 @@ import org.json.JSONObject;
 
 
 import com.uk.tsl.rfid.asciiprotocol.AsciiCommander;
-import com.uk.tsl.rfid.asciiprotocol.DeviceProperties;
 import com.uk.tsl.rfid.asciiprotocol.commands.BarcodeCommand;
 import com.uk.tsl.rfid.asciiprotocol.commands.BatteryStatusCommand;
 import com.uk.tsl.rfid.asciiprotocol.commands.InventoryCommand;
 import com.uk.tsl.rfid.asciiprotocol.commands.VersionInformationCommand;
+import com.uk.tsl.rfid.asciiprotocol.device.IAsciiTransport;
 import com.uk.tsl.rfid.asciiprotocol.device.Reader;
 import com.uk.tsl.rfid.asciiprotocol.device.ReaderManager;
+import com.uk.tsl.rfid.asciiprotocol.device.ObservableReaderList;
+import com.uk.tsl.rfid.asciiprotocol.device.TransportType;
 import com.uk.tsl.rfid.asciiprotocol.enumerations.Databank;
 import com.uk.tsl.rfid.asciiprotocol.enumerations.QuerySession;
 import com.uk.tsl.rfid.asciiprotocol.enumerations.QueryTarget;
@@ -66,6 +68,7 @@ public class TSLScannerDevice implements ScannerDevice {
 	
     // The Reader currently in use
     private Reader mReader = null;
+    private Reader mLastUserDisconnectedReader = null;
 
     public TSLScannerDevice(final CordovaPlugin rfidConnector) {
         this.rfidConnector = rfidConnector;
@@ -73,14 +76,63 @@ public class TSLScannerDevice implements ScannerDevice {
 
         AsciiCommander.createSharedInstance(this.context);
 
-        final AsciiCommander commander = getCommander();
         mInventoryCommand = getInventoryInstance();
 
         ReaderManager.create(this.context);
+
+        // Add observers for changes
+        getReaderManager().getReaderList().readerAddedEvent().addObserver(mAddedObserver);
+        getReaderManager().getReaderList().readerUpdatedEvent().addObserver(mUpdatedObserver);
+        getReaderManager().getReaderList().readerRemovedEvent().addObserver(mRemovedObserver);
+    }
+
+    @Override
+    public void onDestroy() {
+        getReaderManager().getReaderList().readerAddedEvent().removeObserver(mAddedObserver);
+        getReaderManager().getReaderList().readerUpdatedEvent().removeObserver(mUpdatedObserver);
+        getReaderManager().getReaderList().readerRemovedEvent().removeObserver(mRemovedObserver);
+    }
+
+    @Override
+    public void onPause() {
+        // Stop observing events from the AsciiCommander
+        getCommander().stateChangedEvent().removeObserver(mConnectionStateObserver);
+
+        // Disconnect from the reader to allow other Apps to use it
+        // unless pausing when USB device attached or using the DeviceListActivity to select a Reader
+        if( ! getReaderManager().didCauseOnPause() && mReader != null)
+        {
+            mReader.disconnect();
+        }
+
+        getReaderManager().onPause();
+    }
+
+    @Override
+    public void onResume() {
+        // Observe events from the AsciiCommander
+        getCommander().stateChangedEvent().addObserver(mConnectionStateObserver);
+
+        // Remember if the pause/resume was caused by ReaderManager - this will be cleared when ReaderManager.onResume() is called
+        boolean readerManagerDidCauseOnPause = getReaderManager().didCauseOnPause();
+
+        // The ReaderManager needs to know about Activity lifecycle changes
+        getReaderManager().onResume();
+
+        // The Activity may start with a reader already connected (perhaps by another App)
+        // Update the ReaderList which will add any unknown reader, firing events appropriately
+        getReaderManager().updateList();
+
+        // Locate a Reader to use when necessary
+        AutoSelectReader(!readerManagerDidCauseOnPause);
     }
 
     public AsciiCommander getCommander() {
         return AsciiCommander.sharedInstance();
+    }
+
+    public ReaderManager getReaderManager() {
+        return ReaderManager.sharedInstance();
     }
 
     @Override
@@ -94,7 +146,7 @@ public class TSLScannerDevice implements ScannerDevice {
                     if (getCommander().isConnected()) {
                         callbackContext.error(DEVICE_IS_ALREADY_CONNECTED);
                     } else {
-                        ArrayList<Reader> mReaders = ReaderManager.sharedInstance().getReaderList().list();
+                        ArrayList<Reader> mReaders = getReaderManager().getReaderList().list();
                         if (mReaders.size() == 1) {
                             mReader = mReaders.get(0);
                         } else {
@@ -196,9 +248,9 @@ public class TSLScannerDevice implements ScannerDevice {
     @Override
     public void getDeviceList(final CallbackContext callbackContext) {
         try{
-            ReaderManager.sharedInstance().updateList();
+            getReaderManager().updateList();
 
-            ArrayList<Reader> mReaders = ReaderManager.sharedInstance().getReaderList().list();
+            ArrayList<Reader> mReaders = getReaderManager().getReaderList().list();
             JSONArray deviceList = new JSONArray();
             for (Reader reader : mReaders) {
                 JSONObject deviceDetail = new JSONObject();
@@ -628,6 +680,140 @@ public class TSLScannerDevice implements ScannerDevice {
             PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, message + " ***RRRR*** " + responder.toString());
             pluginResult.setKeepCallback(true);
             callbackContext.sendPluginResult(pluginResult);
+        }
+    }
+
+    //----------------------------------------------------------------------------------------------
+    // ReaderList Observers
+    //----------------------------------------------------------------------------------------------
+    Observable.Observer<Reader> mAddedObserver = new Observable.Observer<Reader>()
+    {
+        @Override
+        public void update(Observable<? extends Reader> observable, Reader reader)
+        {
+            // See if this newly added Reader should be used
+            AutoSelectReader(true);
+        }
+    };
+
+    Observable.Observer<Reader> mUpdatedObserver = new Observable.Observer<Reader>()
+    {
+        @Override
+        public void update(Observable<? extends Reader> observable, Reader reader)
+        {
+            // Is this a change to the last actively disconnected reader
+            if( reader == mLastUserDisconnectedReader )
+            {
+                // Things have changed since it was actively disconnected so
+                // treat it as new
+                mLastUserDisconnectedReader = null;
+            }
+
+            // Was the current Reader disconnected i.e. the connected transport went away or disconnected
+            if( reader == mReader && !reader.isConnected() )
+            {
+                // No longer using this reader
+                mReader = null;
+
+                // Stop using the old Reader
+                getCommander().setReader(mReader);
+            }
+            else
+            {
+                // See if this updated Reader should be used
+                // e.g. the Reader's USB transport connected
+                AutoSelectReader(true);
+            }
+        }
+    };
+
+    Observable.Observer<Reader> mRemovedObserver = new Observable.Observer<Reader>()
+    {
+        @Override
+        public void update(Observable<? extends Reader> observable, Reader reader)
+        {
+            // Is this a change to the last actively disconnected reader
+            if( reader == mLastUserDisconnectedReader )
+            {
+                // Things have changed since it was actively disconnected so
+                // treat it as new
+                mLastUserDisconnectedReader = null;
+            }
+
+            // Was the current Reader removed
+            if( reader == mReader)
+            {
+                mReader = null;
+
+                // Stop using the old Reader
+                getCommander().setReader(mReader);
+            }
+        }
+    };
+
+
+    private void AutoSelectReader(boolean attemptReconnect)
+    {
+        ObservableReaderList readerList = getReaderManager().getReaderList();
+        Reader usbReader = null;
+        if( readerList.list().size() >= 1)
+        {
+            // Currently only support a single USB connected device so we can safely take the
+            // first CONNECTED reader if there is one
+            for (Reader reader : readerList.list())
+            {
+                if (reader.hasTransportOfType(TransportType.USB))
+                {
+                    usbReader = reader;
+                    break;
+                }
+            }
+        }
+
+        if( mReader == null )
+        {
+            if( usbReader != null && usbReader != mLastUserDisconnectedReader)
+            {
+                // Use the Reader found, if any
+                mReader = usbReader;
+                getCommander().setReader(mReader);
+            }
+        }
+        else
+        {
+            // If already connected to a Reader by anything other than USB then
+            // switch to the USB Reader
+            IAsciiTransport activeTransport = mReader.getActiveTransport();
+            if ( activeTransport != null && activeTransport.type() != TransportType.USB && usbReader != null)
+            {
+                mReader.disconnect();
+
+                mReader = usbReader;
+
+                // Use the Reader found, if any
+                getCommander().setReader(mReader);
+            }
+        }
+
+        // Reconnect to the chosen Reader
+        if( mReader != null
+                && !mReader.isConnecting()
+                && (mReader.getActiveTransport()== null || mReader.getActiveTransport().connectionStatus().value() == ConnectionState.DISCONNECTED))
+        {
+            // Attempt to reconnect on the last used transport unless the ReaderManager is cause of OnPause (USB device connecting)
+            if( attemptReconnect )
+            {
+                if( mReader.allowMultipleTransports() || mReader.getLastTransportType() == null )
+                {
+                    // Reader allows multiple transports or has not yet been connected so connect to it over any available transport
+                    mReader.connect();
+                }
+                else
+                {
+                    // Reader supports only a single active transport so connect to it over the transport that was last in use
+                    mReader.connect(mReader.getLastTransportType());
+                }
+            }
         }
     }
 
