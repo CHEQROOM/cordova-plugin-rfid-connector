@@ -78,12 +78,12 @@ public class RFIDConnector extends CordovaPlugin {
     }
 
     @Override
-    public void onPause() {
+    public void onPause(boolean multitasking) {
         getScannerDevice().onPause();
     }
 
     @Override
-    public void onResume() {
+    public void onResume(boolean multitasking) {
         getScannerDevice().onResume();
     }
 

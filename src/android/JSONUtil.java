@@ -17,7 +17,7 @@ public class JSONUtil {
 
     }
 
-    public static string createJSONObjectResponse(boolean status, final String errorMsg, Object json) throws JSONException {
+    public static String createJSONObjectResponse(boolean status, final String errorMsg, Object json) throws JSONException {
         JSONObject result = new JSONObject();
         result.put("status", status);
         result.put("errorMsg", errorMsg);
@@ -25,15 +25,15 @@ public class JSONUtil {
         return result.toString();
     }
 
-    public static JSONObject createJSONObjectResponse(boolean status, final String message) throws JSONException {
+    public static String createJSONObjectResponse(boolean status, final String message) throws JSONException {
         return createJSONObjectResponse(status, message, new JSONArray());
     }
 
-    public static JSONObject createJSONObjectSuccessResponse(final Object json) throws JSONException {
+    public static String createJSONObjectSuccessResponse(final Object json) throws JSONException {
         return createJSONObjectResponse(true, " ", json);
     }
 
-    public static JSONObject createJSONObjectErrorResponse(final String errorMsg) throws JSONException {
+    public static String createJSONObjectErrorResponse(final String errorMsg) throws JSONException {
         return createJSONObjectResponse(false, errorMsg, new JSONArray());
     }
 
