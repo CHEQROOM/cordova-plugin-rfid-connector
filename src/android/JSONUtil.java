@@ -17,24 +17,28 @@ public class JSONUtil {
 
     }
 
-    public static JSONObject createJSONObjectResponse(boolean status, final String errorMsg, Object json) throws JSONException {
+    public static String createJSONObjectResponse(String status, final String errorMsg, Object json) throws JSONException {
         JSONObject result = new JSONObject();
         result.put("status", status);
         result.put("errorMsg", errorMsg);
         result.put("data", json);
-        return result;
+        return result.toString();
     }
 
-    public static JSONObject createJSONObjectResponse(boolean status, final String message) throws JSONException {
+    public static String createJSONObjectResponse(String status, final String message) throws JSONException {
         return createJSONObjectResponse(status, message, new JSONArray());
     }
 
-    public static JSONObject createJSONObjectSuccessResponse(final Object json) throws JSONException {
-        return createJSONObjectResponse(true, " ", json);
+    public static String createJSONObjectSuccessResponse(final Object json) throws JSONException {
+        return createJSONObjectResponse("true", " ", json);
     }
 
-    public static JSONObject createJSONObjectErrorResponse(final String errorMsg) throws JSONException {
-        return createJSONObjectResponse(false, errorMsg, new JSONArray());
+    public static String createJSONObjectSuccessResponse(final String status, final Object json) throws JSONException {
+        return createJSONObjectResponse(status, " ", json);
+    }
+
+    public static String createJSONObjectErrorResponse(final String errorMsg) throws JSONException {
+        return createJSONObjectResponse("false", errorMsg, new JSONArray());
     }
 
     public static JSONObject createBarcodeJSONObject(final String barCode) throws JSONException {
