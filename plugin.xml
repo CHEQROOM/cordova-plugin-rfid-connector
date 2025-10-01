@@ -51,9 +51,17 @@
         <config-file target="*-Info.plist" parent="UISupportedExternalAccessoryProtocols">
             <array>
                 <string>com.uk.tsl.rfid</string>
+                <string>com.zebra.rawport</string>
             </array>
         </config-file>
           <source-file src="src/ios/RFIDConnector.m" />
+          <source-file src="src/ios/ScannerDevice.h" />
+          <source-file src="src/ios/ScannerDeviceFactory.m" />
+          <source-file src="src/ios/ScannerDeviceFactory.h" />
+          <source-file src="src/ios/TSLScannerDevice.m" />
+          <source-file src="src/ios/TSLScannerDevice.h" />
+          <source-file src="src/ios/ZebraScannerDevice.m" />
+          <source-file src="src/ios/ZebraScannerDevice.h" />
   	      <framework src="src/ios/TSLAsciiCommands.framework" custom="true" embed="false" />
   		  <framework src="Foundation.framework" weak="true" />
           <framework src="CoreGraphics.framework" weak="true" />
