@@ -14,33 +14,65 @@
     self = [super init];
     if (self) {
         self.api = [srfidSdkFactory createRfidSdkApiInstance];
+        [self.api srfidSetDelegate:self];
+
         self.availableRFIDReaderList = [NSMutableArray array];
         
         
         
-        [self.api srfidSetOperationalMode:SRFID_OPMODE_ALL];
+        [self.api srfidSetOperationalMode:SRFID_OPMODE_MFI];
         [self.api srfidSubsribeForEvents: (SRFID_EVENT_READER_APPEARANCE |
                                       SRFID_EVENT_READER_DISAPPEARANCE |
                                       SRFID_EVENT_SESSION_ESTABLISHMENT |
                                       SRFID_EVENT_SESSION_TERMINATION)];
         [self.api srfidEnableAvailableReadersDetection:YES];
         [self.api srfidEnableAutomaticSessionReestablishment:YES];
-        [self.api srfidSetDelegate:self];
+        
     }
     return self;
 }
+
+-(void)getAvialableReaderList {
+    /* allocate an array for storage of list of available RFID readers */
+    NSMutableArray *available_readers = [[NSMutableArray alloc] init];
+
+    /* allocate an array for storage of list of active RFID readers */
+    NSMutableArray *active_readers = [[NSMutableArray alloc] init];
+
+    /* retrieve a list of available readers */
+    [apiInstance srfidGetAvailableReadersList:&available_readers];
+
+    /* retrieve a list of active readers */
+    [apiInstance srfidGetActiveReadersList:&active_readers];
+
+    /* merge active and available readers to a single list */
+    NSMutableArray *readers = [[NSMutableArray alloc] init];
+
+    [readers addObjectsFromArray:active_readers];
+    [readers addObjectsFromArray:available_readers];
+    for (srfidReaderInfo *info in readers) {
+        /* print the information about RFID reader represented by srfidReaderInfo object */
+        NSLog(@"RFID reader is %@: ID = %d name = %@\n", (([info isActive] == YES) ? @"active" : @"available"), [info getReaderID], [info getReaderName]);
+        lable_reader_list.text = [info getReaderName];
+        readerId = [info getReaderID];
+    }
+}
+
 - (void)getDeviceList:(CDVInvokedUrlCommand*)command commandDelegate:(NSObject<CDVCommandDelegate>*)delegate {
     CDVPluginResult* pluginResult = nil;
     if (command != nil) {
-        NSMutableArray *availableReaders = [NSMutableArray arrayWithCapacity:5];
-        NSMutableArray *activeReaders = [NSMutableArray arrayWithCapacity:5];
-        
-        [self.api srfidGetAvailableReadersList:&availableReaders];
-        [self.api srfidGetActiveReadersList:&activeReaders];
+        /* allocate an array for storage of list of available RFID readers */
+        NSMutableArray *available_readers = [[NSMutableArray alloc] init];
+
+        /* allocate an array for storage of list of active RFID readers */
+        NSMutableArray *active_readers = [[NSMutableArray alloc] init];
+
+        [self.api srfidGetAvailableReadersList:&available_readers];
+        [self.api srfidGetActiveReadersList:&active_readers];
         
         [self.availableRFIDReaderList removeAllObjects];
-        [self.availableRFIDReaderList addObjectsFromArray:availableReaders];
-        [self.availableRFIDReaderList addObjectsFromArray:activeReaders];
+        [self.availableRFIDReaderList addObjectsFromArray:available_readers];
+        [self.availableRFIDReaderList addObjectsFromArray:active_readers];
         
         NSMutableArray *dataArray = [[NSMutableArray alloc] init];
         NSMutableDictionary *readerObj = nil;
@@ -83,6 +115,7 @@
 - (void)stopSearch:(CDVInvokedUrlCommand *)command commandDelegate:(NSObject<CDVCommandDelegate> *)delegate { }
 - (void)subscribeScanner:(CDVInvokedUrlCommand *)command commandDelegate:(NSObject<CDVCommandDelegate> *)delegate { }
 - (void)unsubscribeScanner:(CDVInvokedUrlCommand *)command commandDelegate:(NSObject<CDVCommandDelegate> *)delegate { }
+
 -(void)srfidEventReaderAppeared:(srfidReaderInfo*)availableReader {
     /* print the information about RFID reader represented by srfidReaderInfo
      object */
@@ -93,8 +126,12 @@
     NSLog(@"RFID reader has disappeared: ID = %d\n", readerID);
 }
 - (void)srfidEventBatteryNotity:(int)readerID aBatteryEvent:(srfidBatteryEvent *)batteryEvent { }
-- (void)srfidEventCommunicationSessionEstablished:(srfidReaderInfo *)activeReader { }
-- (void)srfidEventCommunicationSessionTerminated:(int)readerID { }
+- (void)srfidEventCommunicationSessionEstablished:(srfidReaderInfo *)activeReader { 
+    NSLog(@"Reader connected");
+}
+- (void)srfidEventCommunicationSessionTerminated:(int)readerID { 
+    NSLog(@"Reader disconnected");
+}
 - (void)srfidEventConnectedInterfaceNotity:(int)readerID aConnectedInterfaceEvent:(sfidConnectedInterfaceEvent *)connectedInterfaceEvent { }
 - (void)srfidEventIOTSatusNotity:(int)readerID aIOTStatusEvent:(srfidIOTStatusEvent *)iotStatusEvent { }
 - (void)srfidEventMultiProximityNotify:(int)readerID aTagData:(srfidTagData *)tagData { }
