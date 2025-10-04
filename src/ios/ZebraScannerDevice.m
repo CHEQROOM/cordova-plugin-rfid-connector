@@ -32,32 +32,6 @@
     return self;
 }
 
--(void)getAvialableReaderList {
-    /* allocate an array for storage of list of available RFID readers */
-    NSMutableArray *available_readers = [[NSMutableArray alloc] init];
-
-    /* allocate an array for storage of list of active RFID readers */
-    NSMutableArray *active_readers = [[NSMutableArray alloc] init];
-
-    /* retrieve a list of available readers */
-    [apiInstance srfidGetAvailableReadersList:&available_readers];
-
-    /* retrieve a list of active readers */
-    [apiInstance srfidGetActiveReadersList:&active_readers];
-
-    /* merge active and available readers to a single list */
-    NSMutableArray *readers = [[NSMutableArray alloc] init];
-
-    [readers addObjectsFromArray:active_readers];
-    [readers addObjectsFromArray:available_readers];
-    for (srfidReaderInfo *info in readers) {
-        /* print the information about RFID reader represented by srfidReaderInfo object */
-        NSLog(@"RFID reader is %@: ID = %d name = %@\n", (([info isActive] == YES) ? @"active" : @"available"), [info getReaderID], [info getReaderName]);
-        lable_reader_list.text = [info getReaderName];
-        readerId = [info getReaderID];
-    }
-}
-
 - (void)getDeviceList:(CDVInvokedUrlCommand*)command commandDelegate:(NSObject<CDVCommandDelegate>*)delegate {
     CDVPluginResult* pluginResult = nil;
     if (command != nil) {

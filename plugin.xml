@@ -51,7 +51,8 @@
         <config-file target="*-Info.plist" parent="UISupportedExternalAccessoryProtocols">
             <array>
                 <string>com.uk.tsl.rfid</string>
-                <string>com.zebra.rawport</string>
+                <string>com.zebra.rfd8X00_easytext</string>
+                <string>com.zebra.scanner.SSI</string>
             </array>
         </config-file>
           <source-file src="src/ios/RFIDConnector.m" />
@@ -74,5 +75,6 @@
           <framework src="CoreLocation.framework" weak="true" />
           <framework src="CoreBluetooth.framework" weak="true" />
           <framework src="PassKit.framework" weak="true" />
+           <framework src="ExternalAccessory.framework" weak="true" />
     </platform>
 </plugin>
