@@ -33,10 +33,8 @@
 
 /**
  * Get list of available devices
- * @param command The Cordova command
- * @param delegate The command delegate for sending results
  */
-- (void)getDeviceList:(CDVInvokedUrlCommand*)command commandDelegate:(NSObject<CDVCommandDelegate>*)delegate;
+- (NSArray *)getDeviceList;
 
 /**
  * Get device information

@@ -138,39 +138,25 @@ NSObject<CDVCommandDelegate>* subsCmdDelegate;
     [delegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
-- (void)getDeviceList:(CDVInvokedUrlCommand*)command commandDelegate:(NSObject<CDVCommandDelegate>*)delegate {
-    CDVPluginResult* pluginResult = nil;
-    if (command != nil) {
-        NSArray* _currentAccessories = [[EAAccessoryManager sharedAccessoryManager] connectedAccessories];
-        NSMutableArray *dataArray = [[NSMutableArray alloc] init];
-        NSMutableDictionary *accessories = nil;
-        for (EAAccessory *obj in _currentAccessories) {
-            accessories = [[NSMutableDictionary alloc] init];
-            [accessories setObject:obj.name forKey:@"name"];
-            [accessories setObject:obj.serialNumber forKey:@"deviceID"];
-            [dataArray addObject:accessories];
-        }
-        NSError *error = nil;
-        NSString *status = @"true";
-        NSString *errorMsg = @"";
-        NSData *json = nil;
-        NSString *jsonMsg = nil;
-        if (!dataArray || !dataArray.count) {
-            status = @"false";
-            errorMsg = @"Bluetooth connection is not enabled or device is not paired.";
-        }
-        NSDictionary *dict = @{@"data" : dataArray, @"errorMsg" : errorMsg, @"status" : status};
-        if ([NSJSONSerialization isValidJSONObject:dict]) {
-            json = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted error:&error];
-            if (json != nil && error == nil) {
-                jsonMsg = [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
-            }
-        }
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:jsonMsg];
-    } else {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+- (NSArray *)getDeviceList {
+    NSArray* _currentAccessories = [[EAAccessoryManager sharedAccessoryManager] connectedAccessories];
+
+    // Filter for TSL devices
+    NSPredicate *tslPredicate = [NSPredicate predicateWithBlock:^BOOL(EAAccessory *accessory, NSDictionary *bindings) {
+        return [accessory.protocolStrings containsObject:@"com.uk.tsl.rfid"];
+    }];
+
+    NSArray *tslDevices = [_currentAccessories filteredArrayUsingPredicate:tslPredicate];
+
+    NSMutableArray *dataArray = [[NSMutableArray alloc] init];
+    NSMutableDictionary *accessories = nil;
+    for (EAAccessory *obj in tslDevices) {
+        accessories = [[NSMutableDictionary alloc] init];
+        [accessories setObject:obj.name forKey:@"name"];
+        [accessories setObject:obj.serialNumber forKey:@"deviceID"];
+        [dataArray addObject:accessories];
     }
-    [delegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    return [dataArray copy];
 }
 
 - (void)getDeviceInfo:(CDVInvokedUrlCommand*)command commandDelegate:(NSObject<CDVCommandDelegate>*)delegate {

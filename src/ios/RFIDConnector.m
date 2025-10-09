@@ -14,19 +14,42 @@
 @implementation RFIDConnector
 
 - (void)getDeviceList:(CDVInvokedUrlCommand*)command {
-    // Get scanner type from command or use default
-    NSString *deviceType = [command.arguments objectAtIndex:0];
-    if (!deviceType) {
-        deviceType = @"TSL"; // Default
-    }
-    
-    id<ScannerDevice> scanner = [ScannerDeviceFactory getInstance:deviceType];
-    if (scanner) {
-        [scanner getDeviceList:command commandDelegate:self.commandDelegate];
-    } else {
-        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unsupported scanner type"];
+    [self.commandDelegate runInBackground:^{
+        NSArray *supportedTypes = @[@"TSL", @"ZEBRA"];
+        NSMutableArray *allDevices = [NSMutableArray array];
+
+        for (NSString *type in supportedTypes) {
+            id<ScannerDevice> scanner = [ScannerDeviceFactory getInstance:type];
+            if (scanner) {
+                NSArray *devices = [scanner getDeviceList];
+                for (NSDictionary *device in devices) {
+                    NSMutableDictionary *deviceWithType = [device mutableCopy];
+                    deviceWithType[@"deviceType"] = type;
+                    [allDevices addObject:deviceWithType];
+                }
+            }
+        }
+
+        NSError *error = nil;
+        NSString *status = @"true";
+        NSString *errorMsg = @"";
+        NSData *json = nil;
+        NSString *jsonMsg = nil;
+        if (!allDevices || !allDevices.count) {
+            status = @"false";
+            errorMsg = @"Bluetooth connection is not enabled or device is not paired.";
+        }
+        NSDictionary *dict = @{@"data" : allDevices, @"errorMsg" : errorMsg, @"status" : status};
+        if ([NSJSONSerialization isValidJSONObject:dict]) {
+            json = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted error:&error];
+            if (json != nil && error == nil) {
+                jsonMsg = [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
+            }
+        }
+
+        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:jsonMsg];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-    }
+    }];
 }
 
 - (void)connect:(CDVInvokedUrlCommand*)command {

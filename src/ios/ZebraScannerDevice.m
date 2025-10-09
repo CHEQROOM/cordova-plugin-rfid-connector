@@ -32,51 +32,30 @@
     return self;
 }
 
-- (void)getDeviceList:(CDVInvokedUrlCommand*)command commandDelegate:(NSObject<CDVCommandDelegate>*)delegate {
-    CDVPluginResult* pluginResult = nil;
-    if (command != nil) {
-        /* allocate an array for storage of list of available RFID readers */
-        NSMutableArray *available_readers = [[NSMutableArray alloc] init];
+- (NSArray *)getDeviceList {
+    /* allocate an array for storage of list of available RFID readers */
+    NSMutableArray *available_readers = [[NSMutableArray alloc] init];
 
-        /* allocate an array for storage of list of active RFID readers */
-        NSMutableArray *active_readers = [[NSMutableArray alloc] init];
+    /* allocate an array for storage of list of active RFID readers */
+    NSMutableArray *active_readers = [[NSMutableArray alloc] init];
 
-        [self.api srfidGetAvailableReadersList:&available_readers];
-        [self.api srfidGetActiveReadersList:&active_readers];
-        
-        [self.availableRFIDReaderList removeAllObjects];
-        [self.availableRFIDReaderList addObjectsFromArray:available_readers];
-        [self.availableRFIDReaderList addObjectsFromArray:active_readers];
-        
-        NSMutableArray *dataArray = [[NSMutableArray alloc] init];
-        NSMutableDictionary *readerObj = nil;
-        for (srfidReaderInfo *reader in self.availableRFIDReaderList) {
-            readerObj = [[NSMutableDictionary alloc] init];
-            [readerObj setObject:[reader getReaderName] forKey:@"name"];
-            //[readerObj setObject:[reader getReaderID] forKey:@"deviceID"];
-            [dataArray addObject:readerObj];
-        }
-        NSError *error = nil;
-        NSString *status = @"true";
-        NSString *errorMsg = @"";
-        NSData *json = nil;
-        NSString *jsonMsg = nil;
-        if (!dataArray || !dataArray.count) {
-            status = @"false";
-            errorMsg = @"Bluetooth connection is not enabled or device is not paired.";
-        }
-        NSDictionary *dict = @{@"data" : dataArray, @"errorMsg" : errorMsg, @"status" : status};
-        if ([NSJSONSerialization isValidJSONObject:dict]) {
-            json = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted error:&error];
-            if (json != nil && error == nil) {
-                jsonMsg = [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
-            }
-        }
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:jsonMsg];
-    } else {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+    [self.api srfidGetAvailableReadersList:&available_readers];
+    [self.api srfidGetActiveReadersList:&active_readers];
+    
+    [self.availableRFIDReaderList removeAllObjects];
+    [self.availableRFIDReaderList addObjectsFromArray:available_readers];
+    [self.availableRFIDReaderList addObjectsFromArray:active_readers];
+    
+    NSMutableArray *dataArray = [[NSMutableArray alloc] init];
+    NSMutableDictionary *readerObj = nil;
+    for (srfidReaderInfo *reader in self.availableRFIDReaderList) {
+        readerObj = [[NSMutableDictionary alloc] init];
+        [readerObj setObject:[reader getReaderName] forKey:@"name"];
+        //[readerObj setObject:[reader getReaderID] forKey:@"deviceID"];
+        [dataArray addObject:readerObj];
     }
-    [delegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    
+    return [dataArray copy];
 }
 - (void)connect:(CDVInvokedUrlCommand *)command commandDelegate:(NSObject<CDVCommandDelegate> *)delegate {}
 - (void)disconnect:(CDVInvokedUrlCommand *)command commandDelegate:(NSObject<CDVCommandDelegate> *)delegate {}
