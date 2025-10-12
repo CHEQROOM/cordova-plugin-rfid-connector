@@ -8,14 +8,21 @@
 #import <Foundation/Foundation.h>
 #import <Cordova/CDV.h>
 
+typedef NS_ENUM(NSInteger, ScannerConnectionStatus) {
+    ScannerConnectionStatusSuccess,
+    ScannerConnectionStatusAlreadyConnected,
+    ScannerConnectionStatusNotFound,
+    ScannerConnectionStatusNotRecognized,
+    ScannerConnectionStatusError
+};
+
 @protocol ScannerDevice <NSObject>
 
 /**
  * Connect to a device
- * @param command The Cordova command containing device information
- * @param delegate The command delegate for sending results
+* @param name The name of the scanner
  */
-- (void)connect:(CDVInvokedUrlCommand*)command commandDelegate:(NSObject<CDVCommandDelegate>*)delegate;
+- (ScannerConnectionStatus *)connect:(NSString *) name
 
 /**
  * Check if device is connected

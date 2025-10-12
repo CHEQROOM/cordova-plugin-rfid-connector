@@ -6,6 +6,7 @@
 //
 
 #import "TSLScannerDevice.h"
+#import "ScannerDeviceInfo.h"
 #import <Cordova/CDV.h>
 
 @implementation TSLScannerDevice
@@ -42,65 +43,45 @@ NSObject<CDVCommandDelegate>* subsCmdDelegate;
     return self.commander;
 }
 
-- (void)connect:(CDVInvokedUrlCommand*)command commandDelegate:(NSObject<CDVCommandDelegate>*)delegate {
-    CDVPluginResult* pluginResult = nil;
-    NSString* deviceName = [command.arguments objectAtIndex:1];
+- (ScannerConnectionStatus *)connect:(NSString *) name {
+    EAAccessory *accessory = nil;
+    TSLAsciiCommander* commander = [self getCommander];
 
-    if (deviceName != nil && [deviceName length] > 0) {
-        EAAccessory *accessory = nil;
-        TSLAsciiCommander* commander = [self getCommander];
-        NSString* connectionMsg = @"";
-
-        if([commander isConnected]) {
-            accessory = commander.connectedAccessory;
-            if([deviceName isEqualToString:accessory.name] || [deviceName isEqualToString:accessory.serialNumber]) {
-                connectionMsg = DEVICE_IS_ALREADY_CONNECTED;
-            } else {
-                connectionMsg = [@"Already another device is in use, please disconnect first " stringByAppendingString:deviceName];
+    if([commander isConnected]) {
+        return ScannerConnectionStatusAlreadyConnected;
+    }else{
+        NSArray* _currentAccessories = [[EAAccessoryManager sharedAccessoryManager] connectedAccessories];
+        for (EAAccessory *obj in _currentAccessories) {
+            if([name isEqualToString:obj.name] || [name isEqualToString:obj.serialNumber]) {
+                accessory = obj;
             }
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:connectionMsg];
         }
-        if(![commander isConnected]) {
-            NSArray* _currentAccessories = [[EAAccessoryManager sharedAccessoryManager] connectedAccessories];
-            for (EAAccessory *obj in _currentAccessories) {
-                if([deviceName isEqualToString:obj.name] || [deviceName isEqualToString:obj.serialNumber]) {
-                    accessory = obj;
-                }
-            }
-            if(!accessory) {
-                connectionMsg = [@"Device not found " stringByAppendingString:deviceName];
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:connectionMsg];
-            }
-            if(accessory) {
-                self.scanPower = -1;
-                NSString* echo = [commander connect:accessory] ? @"true" : @"false";
-                connectionMsg = echo;
-                if([commander isConnected]) {
-                    [self removeAsyncAndAddSyncResponder];
-                    TSLVersionInformationCommand* versionInformationCommand = [TSLVersionInformationCommand synchronousCommand];
-                    [commander executeCommand:versionInformationCommand];
-                    NSString *connectedDevice = versionInformationCommand.manufacturer;
-                    
-                    if( ([connectedDevice rangeOfString:@"TSL" options:NSCaseInsensitiveSearch].length > 0) || ([connectedDevice rangeOfString:@"Technology Solutions" options:NSCaseInsensitiveSearch].length  >0 ) ) {
-                        TSLInventoryCommand *invCommand = [TSLInventoryCommand synchronousCommand];
-                        invCommand.takeNoAction = TSL_TriState_YES;
-                        invCommand.includeEPC = TSL_TriState_YES;
-                        invCommand.includeTransponderRSSI = TSL_TriState_YES;
-                        [commander executeCommand:invCommand];
-                        [self removeSyncAndAddAsyncResponder];
-                        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:connectionMsg];
-                    } else {
-                        [commander disconnect];
-                        connectionMsg = @"Not a recognised device";
-                        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR  messageAsString:connectionMsg];
-                    }
+        if(!accessory) {
+            return ScannerConnectionStatusNotFound;
+        }
+        if(accessory) {
+            self.scanPower = -1;
+            if([commander isConnected]) {
+                [self removeAsyncAndAddSyncResponder];
+                TSLVersionInformationCommand* versionInformationCommand = [TSLVersionInformationCommand synchronousCommand];
+                [commander executeCommand:versionInformationCommand];
+                NSString *connectedDevice = versionInformationCommand.manufacturer;
+                
+                if( ([connectedDevice rangeOfString:@"TSL" options:NSCaseInsensitiveSearch].length > 0) || ([connectedDevice rangeOfString:@"Technology Solutions" options:NSCaseInsensitiveSearch].length  >0 ) ) {
+                    TSLInventoryCommand *invCommand = [TSLInventoryCommand synchronousCommand];
+                    invCommand.takeNoAction = TSL_TriState_YES;
+                    invCommand.includeEPC = TSL_TriState_YES;
+                    invCommand.includeTransponderRSSI = TSL_TriState_YES;
+                    [commander executeCommand:invCommand];
+                    [self removeSyncAndAddAsyncResponder];
+                    return ScannerConnectionStatusSuccess;
+                } else {
+                    [commander disconnect];
+                    return ScannerConnectionStatusNotRecognized;
                 }
             }
         }
-    } else {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
     }
-    [delegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
 - (void)isConnected:(CDVInvokedUrlCommand*)command commandDelegate:(NSObject<CDVCommandDelegate>*)delegate {
@@ -138,24 +119,21 @@ NSObject<CDVCommandDelegate>* subsCmdDelegate;
     [delegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
-- (NSArray *)getDeviceList {
+- (NSArray<ScannerDeviceInfo *> *)getDeviceList {
     NSArray* _currentAccessories = [[EAAccessoryManager sharedAccessoryManager] connectedAccessories];
-
-    // Filter for TSL devices
     NSPredicate *tslPredicate = [NSPredicate predicateWithBlock:^BOOL(EAAccessory *accessory, NSDictionary *bindings) {
         return [accessory.protocolStrings containsObject:@"com.uk.tsl.rfid"];
     }];
-
+    
     NSArray *tslDevices = [_currentAccessories filteredArrayUsingPredicate:tslPredicate];
-
     NSMutableArray *dataArray = [[NSMutableArray alloc] init];
-    NSMutableDictionary *accessories = nil;
     for (EAAccessory *obj in tslDevices) {
-        accessories = [[NSMutableDictionary alloc] init];
-        [accessories setObject:obj.name forKey:@"name"];
-        [accessories setObject:obj.serialNumber forKey:@"deviceID"];
+        ScannerDeviceInfo *scanner = [[ScannerDeviceInfo alloc] initWithName:[obj.name]
+                                                                       brand:ScannerBrandTSL
+                                                                        type:ScannerTypeRFID];
         [dataArray addObject:accessories];
     }
+
     return [dataArray copy];
 }
 

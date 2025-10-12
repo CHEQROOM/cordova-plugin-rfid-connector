@@ -3,6 +3,7 @@
 #import <Cordova/CDV.h>
 #import "ScannerDevice.h"
 #import "ScannerDeviceFactory.h"
+#import "ScannerDeviceInfo.h"
 
 @interface RFIDConnector : CDVPlugin {
     NSString *scannerType;
@@ -54,14 +55,43 @@
 
 - (void)connect:(CDVInvokedUrlCommand*)command {
     scannerType = [command.arguments objectAtIndex:0];
+    scannerName = [command.arguments objectAtIndex:1];
+
+    if (scannerName == nil || [scannerName length] == 0) {
+        [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Device name is empty"];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        return
+    }
+
     currentScanner = [ScannerDeviceFactory getInstance:scannerType];
-    
-    if (currentScanner) {
-        [currentScanner connect:command commandDelegate:self.commandDelegate];
-    } else {
+    if(currentScanner == nil){
         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unsupported scanner type"];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     }
+
+    ScannerConnectionStatus *status = [currentScanner connect:name scannerName];
+    CDVPluginResult* pluginResult;
+    if(status == ScannerConnectionStatusSuccess){
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    } else {
+        NSString* errorMsg = @"";
+        switch(status){
+            case ScannerConnectionStatusAlreadyConnected:
+                errorMsg = @"Device is already connected.";
+                break;
+            case ScannerConnectionStatusNotFound:
+                error = @"Device not found.";
+                break;
+            case ScannerConnectionStatusNotRecognized:
+                error = @"Not a recognized device";
+                break;
+            default:
+                error = @"Failed to connect to device";
+                break;
+        }
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:errorMsg];
+    }
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
 - (void)isConnected:(CDVInvokedUrlCommand*)command {

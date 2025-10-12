@@ -58,11 +58,12 @@
           <source-file src="src/ios/RFIDConnector.m" />
           <source-file src="src/ios/ScannerDevice.h" />
           <source-file src="src/ios/ScannerDeviceFactory.m" />
-          <source-file src="src/ios/ScannerDeviceFactory.h" />
+          <header-file src="src/ios/ScannerDeviceFactory.h" />
           <source-file src="src/ios/TSLScannerDevice.m" />
-          <source-file src="src/ios/TSLScannerDevice.h" />
+          <header-file src="src/ios/TSLScannerDevice.h" />
           <source-file src="src/ios/ZebraScannerDevice.m" />
-          <source-file src="src/ios/ZebraScannerDevice.h" />
+          <header-file src="src/ios/ZebraScannerDevice.h" />
+          <header-file src="src/ios/ScannerDeviceInfo.h" />
   	      <framework src="src/ios/TSLAsciiCommands.framework" custom="true" embed="false" />
           <framework src="src/ios/ZebraRfidSdkFramework.xcframework" custom="true" embed="true" />
           <framework src="src/ios/ZebraScannerFramework.xcframework" custom="true" embed="true" />

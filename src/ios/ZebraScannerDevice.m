@@ -7,6 +7,7 @@
 #import <ZebraRfidSdkFramework/ZebraRfidSdkFramework.h>
 #import <ZebraScannerFramework/ZebraScannerFramework.h>
 #import "ZebraScannerDevice.h"
+#import "ScannerDeviceInfo.h"
 #import <Cordova/CDV.h>
 
 @implementation ZebraScannerDevice
@@ -17,8 +18,6 @@
         [self.api srfidSetDelegate:self];
 
         self.availableRFIDReaderList = [NSMutableArray array];
-        
-        
         
         [self.api srfidSetOperationalMode:SRFID_OPMODE_MFI];
         [self.api srfidSubsribeForEvents: (SRFID_EVENT_READER_APPEARANCE |
@@ -32,7 +31,7 @@
     return self;
 }
 
-- (NSArray *)getDeviceList {
+- (NSArray<ScannerDeviceInfo *> *)getDeviceList {
     /* allocate an array for storage of list of available RFID readers */
     NSMutableArray *available_readers = [[NSMutableArray alloc] init];
 
@@ -46,18 +45,34 @@
     [self.availableRFIDReaderList addObjectsFromArray:available_readers];
     [self.availableRFIDReaderList addObjectsFromArray:active_readers];
     
-    NSMutableArray *dataArray = [[NSMutableArray alloc] init];
-    NSMutableDictionary *readerObj = nil;
+    NSMutableArray<ScannerDeviceInfo *> *dataArray = [[NSMutableArray alloc] init];
     for (srfidReaderInfo *reader in self.availableRFIDReaderList) {
-        readerObj = [[NSMutableDictionary alloc] init];
-        [readerObj setObject:[reader getReaderName] forKey:@"name"];
-        //[readerObj setObject:[reader getReaderID] forKey:@"deviceID"];
-        [dataArray addObject:readerObj];
+        ScannerDeviceInfo *scanner = [[ScannerDeviceInfo alloc] initWithName:[reader getReaderName]
+                                                                       brand:ScannerBrandZebra
+                                                                        type:ScannerTypeRFID];
+        
+        [dataArray addObject:scanner];
     }
     
     return [dataArray copy];
 }
-- (void)connect:(CDVInvokedUrlCommand *)command commandDelegate:(NSObject<CDVCommandDelegate> *)delegate {}
+- (ScannerConnectionStatus *)connect:(NSString *) name {
+    if([self isConnected]){
+        return ScannerConnectionStatusAlreadyConnected;
+    }
+
+    int readerID = [self getReaderIdByName: name]
+    if (readerID == -1) {
+        return ScannerConnectionStatusNotFound;
+    }
+
+    SBT_RESULT conn_result = [self.api sbtEstablishCommunicationSession:scanner_id];
+    if (SBT_RESULT_SUCCESS != conn_result){
+        return ScannerConnectionStatusError;
+    }
+
+    return ScannerConnectionStatusSuccess;
+}
 - (void)disconnect:(CDVInvokedUrlCommand *)command commandDelegate:(NSObject<CDVCommandDelegate> *)delegate {}
 - (void)getDeviceInfo:(CDVInvokedUrlCommand *)command commandDelegate:(NSObject<CDVCommandDelegate> *)delegate {}
 - (void)isConnected:(CDVInvokedUrlCommand *)command commandDelegate:(NSObject<CDVCommandDelegate> *)delegate { }
@@ -68,6 +83,23 @@
 - (void)stopSearch:(CDVInvokedUrlCommand *)command commandDelegate:(NSObject<CDVCommandDelegate> *)delegate { }
 - (void)subscribeScanner:(CDVInvokedUrlCommand *)command commandDelegate:(NSObject<CDVCommandDelegate> *)delegate { }
 - (void)unsubscribeScanner:(CDVInvokedUrlCommand *)command commandDelegate:(NSObject<CDVCommandDelegate> *)delegate { }
+
+
+- (int)getReaderIdByName:(NSString *)name {
+    if (self.availableRFIDReaderList == nil) {
+        return -1;
+    }
+
+    for (srfidReaderInfo *reader in self.availableRFIDReaderList) {
+        if ([[reader getReaderName] isEqualToString:name]) {
+            return [reader getReaderID];
+        }
+    }
+
+    return -1;
+}
+
+
 
 -(void)srfidEventReaderAppeared:(srfidReaderInfo*)availableReader {
     /* print the information about RFID reader represented by srfidReaderInfo
