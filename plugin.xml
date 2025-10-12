@@ -64,6 +64,7 @@
           <source-file src="src/ios/ZebraScannerDevice.m" />
           <header-file src="src/ios/ZebraScannerDevice.h" />
           <header-file src="src/ios/ScannerDeviceInfo.h" />
+          <source-file src="src/ios/ScannerDeviceInfo.m" />
   	      <framework src="src/ios/TSLAsciiCommands.framework" custom="true" embed="false" />
           <framework src="src/ios/ZebraRfidSdkFramework.xcframework" custom="true" embed="true" />
           <framework src="src/ios/ZebraScannerFramework.xcframework" custom="true" embed="true" />

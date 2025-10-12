@@ -12,10 +12,12 @@ typedef NS_ENUM(NSInteger, ScannerType) {
 
 @interface ScannerDeviceInfo : NSObject
 
-@property (nonatomic, strong) NSString *name
-@property (nonatomic, assign) ScannerBrand *brand
-@property (nonatomic, assign) ScannerType *type
+@property (nonatomic, strong) NSString *name;
+@property (nonatomic, assign) ScannerBrand brand;
+@property (nonatomic, assign) ScannerType type;
 
-- (instancetype)initWithName:(NSString *)name brand:(ScannerBrand)brand; type:(ScannerType)type
+- (instancetype)initWithName:(NSString *)name 
+                       brand:(ScannerBrand)brand
+                       type:(ScannerType)type;
 
 @end

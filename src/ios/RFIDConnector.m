@@ -55,22 +55,22 @@
 
 - (void)connect:(CDVInvokedUrlCommand*)command {
     scannerType = [command.arguments objectAtIndex:0];
-    scannerName = [command.arguments objectAtIndex:1];
+    NSString *scannerName = [command.arguments objectAtIndex:1];
 
+    CDVPluginResult* pluginResult;
     if (scannerName == nil || [scannerName length] == 0) {
-        [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Device name is empty"];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Device name is empty"];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-        return
+        return;
     }
 
     currentScanner = [ScannerDeviceFactory getInstance:scannerType];
     if(currentScanner == nil){
-        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unsupported scanner type"];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unsupported scanner type"];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     }
 
-    ScannerConnectionStatus *status = [currentScanner connect:name scannerName];
-    CDVPluginResult* pluginResult;
+    ScannerConnectionStatus status = [currentScanner connect:scannerName];
     if(status == ScannerConnectionStatusSuccess){
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     } else {
@@ -80,13 +80,13 @@
                 errorMsg = @"Device is already connected.";
                 break;
             case ScannerConnectionStatusNotFound:
-                error = @"Device not found.";
+                errorMsg = @"Device not found.";
                 break;
             case ScannerConnectionStatusNotRecognized:
-                error = @"Not a recognized device";
+                errorMsg = @"Not a recognized device";
                 break;
             default:
-                error = @"Failed to connect to device";
+                errorMsg = @"Failed to connect to device";
                 break;
         }
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:errorMsg];

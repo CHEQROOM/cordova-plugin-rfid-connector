@@ -22,7 +22,7 @@ typedef NS_ENUM(NSInteger, ScannerConnectionStatus) {
  * Connect to a device
 * @param name The name of the scanner
  */
-- (ScannerConnectionStatus *)connect:(NSString *) name
+- (ScannerConnectionStatus *)connect:(NSString *) name;
 
 /**
  * Check if device is connected

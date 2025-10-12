@@ -57,16 +57,16 @@
     return [dataArray copy];
 }
 - (ScannerConnectionStatus *)connect:(NSString *) name {
-    if([self isConnected]){
-        return ScannerConnectionStatusAlreadyConnected;
-    }
+    //if([self isConnected]){
+    //    return ScannerConnectionStatusAlreadyConnected;
+    //}
 
-    int readerID = [self getReaderIdByName: name]
+    int readerID = [self getReaderIdByName: name];
     if (readerID == -1) {
         return ScannerConnectionStatusNotFound;
     }
 
-    SBT_RESULT conn_result = [self.api sbtEstablishCommunicationSession:scanner_id];
+    SBT_RESULT conn_result = [self.api srfidEstablishCommunicationSession:readerID];
     if (SBT_RESULT_SUCCESS != conn_result){
         return ScannerConnectionStatusError;
     }
