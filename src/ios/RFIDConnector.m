@@ -188,4 +188,18 @@
     }
 }
 
+- (void)getPairingBarcode:(CDVInvokedUrlCommand*)command {
+    [self.commandDelegate runInBackground:^{
+        CDVPluginResult* pluginResult = nil;
+        if (currentScanner) {
+            NSString *base64String = [currentScanner getPairingBarcode];
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_SUCCESS messageAsString:base64String];
+        } else {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"No scanner connected"];
+        }
+
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
+}
+
 @end

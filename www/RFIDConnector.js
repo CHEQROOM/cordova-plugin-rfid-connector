@@ -78,6 +78,12 @@ RFIDConnector.prototype.stopSearch = function (successCallback,
 		[]);
 }
 
+RFIDConnector.prototype.getPairingBarcode = function (successCallback,
+	failureCallback) {
+	exec(successCallback, failureCallback, 'RFIDConnector', 'getPairingBarcode',
+		[]);
+}
+
 
 RFIDConnector.install = function () {
 	if (!window.plugins) {
