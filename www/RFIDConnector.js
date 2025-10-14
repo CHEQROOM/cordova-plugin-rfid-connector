@@ -16,11 +16,6 @@ RFIDConnector.prototype.connect = function (deviceType, deviceID,
 	successCallback, failureCallback) {
 	exec(successCallback, failureCallback, 'RFIDConnector', 'connect', [
 		deviceType, deviceID]);
-	//		Call the execute methord again to connect if device is zebra & platform is iOS
-	if (cordova.platformId === 'ios') {
-		exec(successCallback, failureCallback, 'RFIDConnector', 'connect',
-			[deviceType, deviceID]);
-	}
 }
 
 RFIDConnector.prototype.isConnected = function (successCallback,

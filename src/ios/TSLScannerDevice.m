@@ -84,18 +84,13 @@ NSObject<CDVCommandDelegate>* subsCmdDelegate;
     }
 }
 
-- (void)isConnected:(CDVInvokedUrlCommand*)command commandDelegate:(NSObject<CDVCommandDelegate>*)delegate {
-    CDVPluginResult* pluginResult = nil;
-    NSString* echo = @"n/a";
-    if (command != nil) {
-        TSLAsciiCommander* commander = [self getCommander];
-        echo = [commander isConnected] ? @"true" : @"false";
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:echo];
-    } else {
-        echo = @"false";
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:echo];
+- (BOOL)isConnected {
+    if (command == nil) {
+        return false;
     }
-    [delegate sendPluginResult:pluginResult callbackId:command.callbackId];
+
+    TSLAsciiCommander* commander = [self getCommander];
+    return [commander isConnected];    
 }
 
 - (void)disconnect:(CDVInvokedUrlCommand*)command commandDelegate:(NSObject<CDVCommandDelegate>*)delegate {

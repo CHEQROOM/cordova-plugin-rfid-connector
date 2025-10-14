@@ -12,4 +12,12 @@
     return self;
 }
 
+- (NSDictionary *)toDictionary {
+    return @{
+        @"name": self.name ?: @"",
+        @"brand": @(self.brand),
+        @"type": @(self.type)
+    };
+}
+
 @end

@@ -23,11 +23,7 @@
             id<ScannerDevice> scanner = [ScannerDeviceFactory getInstance:type];
             if (scanner) {
                 NSArray *devices = [scanner getDeviceList];
-                for (NSDictionary *device in devices) {
-                    NSMutableDictionary *deviceWithType = [device mutableCopy];
-                    deviceWithType[@"deviceType"] = type;
-                    [allDevices addObject:deviceWithType];
-                }
+                [allDevices addObjectsFromArray:[devices valueForKey:@"toDictionary"]];
             }
         }
 
@@ -54,53 +50,60 @@
 }
 
 - (void)connect:(CDVInvokedUrlCommand*)command {
-    scannerType = [command.arguments objectAtIndex:0];
-    NSString *scannerName = [command.arguments objectAtIndex:1];
+    [self.commandDelegate runInBackground:^{
+        scannerType = [command.arguments objectAtIndex:0];
+        NSString *scannerName = [command.arguments objectAtIndex:1];
 
-    CDVPluginResult* pluginResult;
-    if (scannerName == nil || [scannerName length] == 0) {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Device name is empty"];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-        return;
-    }
-
-    currentScanner = [ScannerDeviceFactory getInstance:scannerType];
-    if(currentScanner == nil){
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unsupported scanner type"];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-    }
-
-    ScannerConnectionStatus status = [currentScanner connect:scannerName];
-    if(status == ScannerConnectionStatusSuccess){
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-    } else {
-        NSString* errorMsg = @"";
-        switch(status){
-            case ScannerConnectionStatusAlreadyConnected:
-                errorMsg = @"Device is already connected.";
-                break;
-            case ScannerConnectionStatusNotFound:
-                errorMsg = @"Device not found.";
-                break;
-            case ScannerConnectionStatusNotRecognized:
-                errorMsg = @"Not a recognized device";
-                break;
-            default:
-                errorMsg = @"Failed to connect to device";
-                break;
+        CDVPluginResult* pluginResult = nil;
+        if (scannerName == nil || [scannerName length] == 0) {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Device name is empty"];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            return;
         }
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:errorMsg];
-    }
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+
+        currentScanner = [ScannerDeviceFactory getInstance:scannerType];
+        if(currentScanner == nil){
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unsupported scanner type"];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        }
+
+        ScannerConnectionStatus status = [currentScanner connect:scannerName];
+        if(status == ScannerConnectionStatusSuccess){
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        } else {
+            NSString* errorMsg = @"";
+            switch(status){
+                case ScannerConnectionStatusAlreadyConnected:
+                    errorMsg = @"Device is already connected.";
+                    break;
+                case ScannerConnectionStatusNotFound:
+                    errorMsg = @"Device not found.";
+                    break;
+                case ScannerConnectionStatusNotRecognized:
+                    errorMsg = @"Not a recognized device";
+                    break;
+                default:
+                    errorMsg = @"Failed to connect to device";
+                    break;
+            }
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:errorMsg];
+        }
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
 }
 
 - (void)isConnected:(CDVInvokedUrlCommand*)command {
-    if (currentScanner) {
-        [currentScanner isConnected:command commandDelegate:self.commandDelegate];
-    } else {
-        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"No scanner connected"];
+    [self.commandDelegate runInBackground:^{
+        CDVPluginResult* pluginResult = nil;
+        if (currentScanner) {
+            BOOL isConnected = [currentScanner isConnected];
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:isConnected ? @"true" : @"false"];
+        } else {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"No scanner connected"];
+        }
+
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-    }
+    }];
 }
 
 - (void)disconnect:(CDVInvokedUrlCommand*)command {

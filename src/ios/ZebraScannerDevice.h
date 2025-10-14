@@ -10,9 +10,11 @@
 #import <ZebraRfidSdkFramework/ZebraRfidSdkFramework.h>
 #import <ZebraScannerFramework/ZebraScannerFramework.h>
 
-@interface ZebraScannerDevice : NSObject <ScannerDevice, srfidISdkApiDelegate>
+@interface ZebraScannerDevice : NSObject <ScannerDevice, srfidISdkApiDelegate, ISbtSdkApiDelegate>
 
-@property (nonatomic, strong) id<srfidISdkApi> api;
+@property (nonatomic, strong) id<srfidISdkApi> rfidApi;
+@property (nonatomic, strong) id<ISbtSdkApi> barcodeApi;
 @property (nonatomic, strong) NSMutableArray<srfidReaderInfo *> *availableRFIDReaderList;
+@property (nonatomic, assign) int connectedReaderId; 
 
 @end
