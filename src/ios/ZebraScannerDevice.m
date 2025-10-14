@@ -78,7 +78,7 @@
     [self.barcodeApi sbtGetActiveScannersList:&activeScanners];
 
     NSArray *allBarcode = [availableRFID arrayByAddingObjectsFromArray:activeRFID];
-    for (ISbtDeviceInfo *device in allBarcode) {
+    for (SbtScannerInfo *device in allBarcode) {
         NSString *deviceId = [device getScannerName];
         if (![uniqueDeviceIds containsObject:deviceId]) {
             ScannerDeviceInfo *scanner = [[ScannerDeviceInfo alloc] initWithName:deviceId
@@ -89,32 +89,32 @@
         }
     }
     
-    return [dataArray copy];
+    return [allBarcode copy];
 }
 - (ScannerConnectionStatus *)connect:(NSString *) name {
     int readerID = [self getReaderIdByName: name];
     if (readerID == -1) {
         return ScannerConnectionStatusNotFound;
-    }else if(self.connectedReaderID == readerID){
-        return ScannerConnectionStatusAlreadyConnected
+    }else if(self.connectedReaderId == readerID){
+        return ScannerConnectionStatusAlreadyConnected;
     }else if(self.connectedReaderId != readerID){
-        [self disconnect]
+        [self disconnect];
     }
 
-    SRFID_RESULT conn_result = [self.api srfidEstablishCommunicationSession:readerID];
+    SRFID_RESULT conn_result = [self.rfidApi srfidEstablishCommunicationSession:readerID];
     if (SRFID_RESULT_SUCCESS != conn_result){
         return ScannerConnectionStatusError;
     }
 
     return ScannerConnectionStatusSuccess;
 }
-- (BOOL)disconnect() {
-    if(self.connectedReaderID == nil){
+- (BOOL)disconnect {
+    if(self.connectedReaderId == nil){
         return false;
     }
 
-    SRFID_RESULT result = api.srfidTerminateCommunicationSession(connectedReaderID!);
-    return result == SRFID_RESULT_SUCCESS
+    SRFID_RESULT result = [self.rfidApi srfidTerminateCommunicationSession:self.connectedReaderId];
+    return result == SRFID_RESULT_SUCCESS;
 }
 
 
@@ -158,11 +158,11 @@
 - (void)srfidEventBatteryNotity:(int)readerID aBatteryEvent:(srfidBatteryEvent *)batteryEvent { }
 - (void)srfidEventCommunicationSessionEstablished:(srfidReaderInfo *)activeReader { 
     NSLog(@"Reader connected");
-    self.connectedReaderID = [activeReader getReaderID];
+    self.connectedReaderId = [activeReader getReaderID];
 }
 - (void)srfidEventCommunicationSessionTerminated:(int)readerID { 
     NSLog(@"Reader disconnected");
-    self.connectedReaderID = nil;
+    self.connectedReaderId = nil;
 }
 - (void)srfidEventConnectedInterfaceNotity:(int)readerID aConnectedInterfaceEvent:(sfidConnectedInterfaceEvent *)connectedInterfaceEvent { }
 - (void)srfidEventIOTSatusNotity:(int)readerID aIOTStatusEvent:(srfidIOTStatusEvent *)iotStatusEvent { }

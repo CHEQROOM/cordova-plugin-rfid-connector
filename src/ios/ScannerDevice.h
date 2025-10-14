@@ -25,11 +25,9 @@ typedef NS_ENUM(NSInteger, ScannerConnectionStatus) {
 - (ScannerConnectionStatus *)connect:(NSString *) name;
 
 /**
- * Check if device is connected
- * @param command The Cordova command
- * @param delegate The command delegate for sending results
+ * Check if device is still connected
  */
-- (void)isConnected:(CDVInvokedUrlCommand*)command commandDelegate:(NSObject<CDVCommandDelegate>*)delegate;
+- (BOOL)isConnected;
 
 /**
  * Disconnect from device

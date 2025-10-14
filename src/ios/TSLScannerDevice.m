@@ -85,10 +85,6 @@ NSObject<CDVCommandDelegate>* subsCmdDelegate;
 }
 
 - (BOOL)isConnected {
-    if (command == nil) {
-        return false;
-    }
-
     TSLAsciiCommander* commander = [self getCommander];
     return [commander isConnected];    
 }
