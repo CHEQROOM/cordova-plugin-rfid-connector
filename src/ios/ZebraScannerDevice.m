@@ -46,6 +46,8 @@
     [self.barcodeApi sbtSetOperationalMode:SBT_OPMODE_ALL];
     [self.barcodeApi sbtSubsribeForEvents:(SBT_EVENT_SCANNER_APPEARANCE |
                                            SBT_EVENT_SCANNER_DISAPPEARANCE |
+                                           SBT_EVENT_SESSION_ESTABLISHMENT |
+                                           SBT_EVENT_SESSION_TERMINATION |
                                            SBT_EVENT_BARCODE)];
 }
 
@@ -147,17 +149,17 @@
     return -1;
 }
 
-- (NSString)getPairingBarcode {
+- (NSString *)getPairingBarcode {
     // Get the barcode from Zebra SDK
-    UIImage *barcodeImage = [self.barcodeApi sbtGetPairingBarcode:BARCODE_TYPE_BTLE];
-
+    UIImage *barcodeImage = [self.barcodeApi sbtGetPairingBarcode:BARCODE_TYPE_BTLE withComProtocol:STC_SSI_BLE withSetDefaultStatus:SETDEFAULT_NO withImageFrame:CGRectMake(0, 0, 300, 300)];
+    
     // Convert to PNG data
     NSData *imageData = UIImagePNGRepresentation(barcodeImage);
     
     // Encode to Base64 string
     NSString *base64String = [imageData base64EncodedStringWithOptions:0];
 
-    return base64String
+    return base64String;
 }
 
 

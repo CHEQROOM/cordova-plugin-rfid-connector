@@ -97,4 +97,6 @@ typedef NS_ENUM(NSInteger, ScannerConnectionStatus) {
  */
 - (void)stopSearch:(CDVInvokedUrlCommand*)command commandDelegate:(NSObject<CDVCommandDelegate>*)delegate;
 
+
+- (NSString *)getPairingBarcode;
 @end 
