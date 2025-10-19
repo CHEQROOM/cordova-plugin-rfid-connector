@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 #import <Cordova/CDV.h>
+#import "ScannerDeviceInfo.h"
 
 typedef NS_ENUM(NSInteger, ScannerConnectionStatus) {
     ScannerConnectionStatusSuccess,

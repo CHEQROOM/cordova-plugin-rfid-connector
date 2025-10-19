@@ -32,7 +32,8 @@
     [self.rfidApi srfidSubsribeForEvents:(SRFID_EVENT_READER_APPEARANCE |
                                           SRFID_EVENT_READER_DISAPPEARANCE |
                                           SRFID_EVENT_SESSION_ESTABLISHMENT |
-                                          SRFID_EVENT_SESSION_TERMINATION)];
+                                          SRFID_EVENT_SESSION_TERMINATION | 
+                                          SRFID_EVENT_MASK_BATTERY)];
     [self.rfidApi srfidEnableAvailableReadersDetection:YES];
     [self.rfidApi srfidEnableAutomaticSessionReestablishment:YES];
 
@@ -45,7 +46,7 @@
     [self.barcodeApi sbtSetDelegate:self];
     
     [self.barcodeApi sbtSetOperationalMode:SBT_OPMODE_ALL];
-    [self.barcodeApi sbtSubscribeForEvents:(SBT_EVENT_SCANNER_APPEARANCE |
+    [self.barcodeApi sbtSubsribeForEvents:(SBT_EVENT_SCANNER_APPEARANCE |
                                            SBT_EVENT_SCANNER_DISAPPEARANCE |
                                            SBT_EVENT_SESSION_ESTABLISHMENT |
                                            SBT_EVENT_SESSION_TERMINATION |
@@ -73,7 +74,7 @@
         ScannerDeviceInfo *scanner = [[ScannerDeviceInfo alloc] initWithName:readerName
                                                                        brand:ScannerBrandZebra
                                                                         type:ScannerTypeRFID
-                                                                    deviceId:readerId];
+                                                                    deviceId:[@(readerId) stringValue]];
         [self.deviceList addObject:scanner];
     }
 
@@ -85,13 +86,13 @@
     [self.barcodeApi sbtGetActiveScannersList:&activeScanners];
 
     NSArray *allScanners = [availableScanners arrayByAddingObjectsFromArray:activeScanners];
-    for (SbtScannerInfo *scanner in allScanners) {
+    for (SbtScannerInfo *barcodeScanner in allScanners) {
         NSString *scannerName = [barcodeScanner getScannerName];
         int scannerId = [barcodeScanner getScannerID];
         ScannerDeviceInfo *scanner = [[ScannerDeviceInfo alloc] initWithName:scannerName
                                                                        brand:ScannerBrandZebra
                                                                         type:ScannerTypeBarcode
-                                                                    deviceId:scannerId];
+                                                                    deviceId:[@(scannerId) stringValue]];
         [self.deviceList addObject:scanner];
         
     }
@@ -99,7 +100,7 @@
     return [self.deviceList copy];
 }
 - (ScannerConnectionStatus *)connect:(NSString *) deviceId {
-    ScannerDeviceInfo *deviceInfo = [self.getDeviceInfoById: deviceId];
+    ScannerDeviceInfo *deviceInfo = [self getDeviceInfoById:deviceId];
     if (deviceInfo == nil) {
         return ScannerConnectionStatusNotFound;
     }else if(self.connectedRfidReaderId == deviceId || self.connectedBarcodeScannerId == deviceId){
@@ -109,12 +110,12 @@
     }
 
     if(deviceInfo.type == ScannerTypeRFID){
-        SRFID_RESULT connectionResult = [self.rfidApi srfidEstablishCommunicationSession:deviceInfo.deviceId];
+        SRFID_RESULT connectionResult = [self.rfidApi srfidEstablishCommunicationSession:[deviceInfo.deviceId intValue]];
         if (SRFID_RESULT_SUCCESS != connectionResult){
             return ScannerConnectionStatusError;
         }
     }else{
-        SBT_RESULT connectionResult =[scanInstance sbtEstablishCommunicationSession:deviceInfo.deviceId];
+        SBT_RESULT connectionResult =[self.barcodeApi sbtEstablishCommunicationSession:[deviceInfo.deviceId intValue]];
         if(connectionResult != SBT_RESULT_SUCCESS){
             return ScannerConnectionStatusError;
         }
@@ -127,7 +128,7 @@
         return false;
     }
 
-    if(connectedRfidReaderId != nil){
+    if(self.connectedRfidReaderId != nil){
         SRFID_RESULT rfidResult = [self.rfidApi srfidTerminateCommunicationSession:self.connectedRfidReaderId];
         if(rfidResult != SRFID_RESULT_SUCCESS){
             return false;
@@ -148,24 +149,24 @@
 
 
 - (ScannerDeviceInfo *)getDeviceInfo {
-    if(self.connectedReaderId == nil){
+    if(self.connectedRfidReaderId == nil){
         return nil;
     }
 
-    srfidBatteryStatusInfo *batteryInfo = [[srfidBatteryStatusInfo alloc] init];
-    [self.rfidApi srfidGetBatteryStatus:self.connectedRfidReaderId aBatteryStatusInfo:batteryInfo];
+    [self.rfidApi srfidRequestBatteryStatus:self.connectedRfidReaderId];
 
     srfidReaderCapabilitiesInfo *capabilities = [[srfidReaderCapabilitiesInfo alloc] init];
     NSString *error_response = nil;
     
-    SRFID_RESULT result = [self.rfidApi srfidGetReaderCapabilitiesInfo:[reader getReaderID] aReaderCapabilitiesInfo:&capabilities aStatusMessage:&error_response];
+    SRFID_RESULT result = [self.rfidApi srfidGetReaderCapabilitiesInfo:self.connectedRfidReaderId aReaderCapabilitiesInfo:&capabilities aStatusMessage:&error_response];
     if (SRFID_RESULT_SUCCESS == result) {
-        ScannerDeviceInfo *deviceInfo = [self.getDeviceInfoById: deviceId];    
+
+        ScannerDeviceInfo *deviceInfo = [self getDeviceInfoById: [@(self.connectedRfidReaderId) stringValue]];    
         deviceInfo.serialNumber = [capabilities getSerialNumber];
         deviceInfo.manufacturer = [capabilities getManufacturer];
         deviceInfo.hardwareVersion = [capabilities getAsciiVersion];
         deviceInfo.firmwareVersion = [capabilities getAirProtocolVersion];
-        deviceInfo.batteryLevel = [batteryInfo getLevelInPercentage];
+        deviceInfo.batteryLevel = self.batteryLevel;
         deviceInfo.antennaMin = [capabilities getMinPower];
         deviceInfo.antennaMax = [capabilities getMaxPower];
         deviceInfo.pScanPower = [capabilities getMaxPower];
@@ -175,7 +176,7 @@
 
     return nil;
 }
-- (BOOL)isConnected:(NSString *) name {
+- (BOOL)isConnected {
     return self.connectedRfidReaderId != nil;    
  }
 - (void)subscribeScanner:(CDVInvokedUrlCommand *)command commandDelegate:(NSObject<CDVCommandDelegate> *)delegate { }
@@ -187,13 +188,13 @@
 - (void)stopSearch:(CDVInvokedUrlCommand *)command commandDelegate:(NSObject<CDVCommandDelegate> *)delegate { }
 
 
-- (ScannerDeviceInfo *)getDeviceInfoById:(int) deviceId {
+- (ScannerDeviceInfo *)getDeviceInfoById:(NSString *) deviceId {
     if (self.deviceList.count == 0) {
         [self getDeviceList];
     }
 
     for (ScannerDeviceInfo *deviceInfo in self.deviceList) {
-        if ([deviceInfo.deviceid isEqualToString:deviceId]) {
+        if ([deviceInfo.deviceId isEqualToString:deviceId]) {
             return [deviceInfo copy];
         }
     }
@@ -203,7 +204,7 @@
 
 - (NSString *)getPairingBarcode {
     // Get the barcode from Zebra SDK
-    UIImage *barcodeImage = [self.barcodeApi sbtGetPairingBarcode:BARCODE_TYPE_BTLE withComProtocol:STC_SSI_BLE withSetDefaultStatus:SETDEFAULT_NO withImageFrame:CGRectMake(0, 0, 300, 300)];
+    UIImage *barcodeImage = [self.barcodeApi sbtGetPairingBarcode:BARCODE_TYPE_STC withComProtocol:STC_SSI_BLE withSetDefaultStatus:SETDEFAULT_NO withImageFrame:CGRectMake(0, 0, 300, 300)];
     
     // Convert to PNG data
     NSData *imageData = UIImagePNGRepresentation(barcodeImage);
@@ -249,16 +250,15 @@
             [[ScannerDeviceInfo alloc] initWithName:readerName
                                               brand:ScannerBrandZebra
                                                type:ScannerTypeRFID
-                                           deviceId:readerId];
-    [self.addDevice deviceInfo]
+                                           deviceId:[@(readerId) stringValue]];
+    [self addDevice: deviceInfo];
 
     NSLog(@"RFID reader has appeared: name = %@", readerName);
 }
 -(void)srfidEventReaderDisappeared:(int)readerID {
     NSLog(@"RFID reader has disappeared: ID = %d", readerID);
-    [self.removeDevice readerID]
+    [self removeDevice: readerID];
 }
-- (void)srfidEventBatteryNotity:(int)readerID aBatteryEvent:(srfidBatteryEvent *)batteryEvent { }
 - (void)srfidEventCommunicationSessionEstablished:(srfidReaderInfo *)activeReader { 
     NSLog(@"Rfid Reader connected");
     self.connectedRfidReaderId = [activeReader getReaderID];
@@ -277,11 +277,13 @@
 - (void)srfidEventStatusNotify:(int)readerID aEvent:(SRFID_EVENT_STATUS)event aNotification:(id)notificationData { }
 - (void)srfidEventTriggerNotify:(int)readerID aTriggerEvent:(SRFID_TRIGGEREVENT)triggerEvent { }
 - (void)srfidEventWifiScan:(int)readerID wlanSCanObject:(srfidWlanScanList *)wlanScanObject { }
-
+- (void)srfidEventBatteryNotity:(int)readerID aBatteryEvent:(srfidBatteryEvent*)batteryEvent {
+    self.batteryLevel = [batteryEvent getPowerLevel];
+}
 
 - (void)sbtEventCommunicationSessionEstablished:(SbtScannerInfo*)activeScanner {
     NSLog(@"Barcode Reader connected");
-    self.connectedBarcodeScannerId = [activeScanner getScannerID] 
+    self.connectedBarcodeScannerId = [activeScanner getScannerID];
 };
 - (void)sbtEventCommunicationSessionTerminated:(int)scannerID {
     NSLog(@"Barcode Reader disconnected");
@@ -296,13 +298,13 @@
             [[ScannerDeviceInfo alloc] initWithName:scannerName
                                               brand:ScannerBrandZebra
                                                type:ScannerTypeBarcode
-                                           deviceId:scannerId];
-    [self.addDevice deviceInfo]
+                                           deviceId:[@(scannerId) stringValue]];
+    [self addDevice: deviceInfo];
 
 };
 - (void)sbtEventScannerDisappeared:(int)scannerID {
     NSLog(@"Barcode Reader dissapeared");
-    [self.removeDevice scannerID]
+    [self removeDevice: scannerID];
 };
 - (void)sbtEventBarcode:(NSString*)barcodeData barcodeType:(int)barcodeType fromScanner:(int)scannerID {
     NSLog(@"Barcode scanned %@", barcodeData);

@@ -15,7 +15,7 @@ typedef NS_ENUM(NSInteger, ScannerType) {
 @property (nonatomic, strong) NSString *name;
 @property (nonatomic, assign) ScannerBrand brand;
 @property (nonatomic, assign) ScannerType type;
-@property (nonatomic, strong) NSString deviceId;
+@property (nonatomic, strong) NSString *deviceId;
 
 @property (nonatomic, strong) NSString *serialNumber;
 @property (nonatomic, strong) NSString *manufacturer;
@@ -29,7 +29,9 @@ typedef NS_ENUM(NSInteger, ScannerType) {
 
 - (instancetype)initWithName:(NSString *)name 
                        brand:(ScannerBrand)brand
-                       type:(ScannerType)type;
+                       type:(ScannerType)type
+                       deviceId:(NSString *)deviceId;
 - (NSDictionary *)toDictionary;
+- (id)copyWithZone:(NSZone *)zone;
 
 @end

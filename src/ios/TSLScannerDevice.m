@@ -8,6 +8,7 @@
 #import "TSLScannerDevice.h"
 #import "ScannerDeviceInfo.h"
 #import <Cordova/CDV.h>
+#import "ScannerDeviceInfo.h"
 
 @implementation TSLScannerDevice
 
@@ -38,7 +39,7 @@ NSObject<CDVCommandDelegate>* subsCmdDelegate;
     }else{
         NSArray* _currentAccessories = [[EAAccessoryManager sharedAccessoryManager] connectedAccessories];
         for (EAAccessory *obj in _currentAccessories) {
-            if([name isEqualToString:obj.name] || [name isEqualToString:obj.serialNumber]) {
+            if([deviceId isEqualToString:obj.name] || [deviceId isEqualToString:obj.serialNumber]) {
                 accessory = obj;
             }
         }
@@ -142,7 +143,8 @@ NSObject<CDVCommandDelegate>* subsCmdDelegate;
 
     ScannerDeviceInfo *info = [[ScannerDeviceInfo alloc] initWithName:accessory.name
                                                     brand:ScannerBrandTSL
-                                                        type:ScannerTypeRFID];
+                                                        type:ScannerTypeRFID
+                                                    deviceId:versionInformationCommand.serialNumber];
     info.serialNumber = versionInformationCommand.serialNumber;
     info.manufacturer = versionInformationCommand.manufacturer;
     info.hardwareVersion = accessory.hardwareRevision;

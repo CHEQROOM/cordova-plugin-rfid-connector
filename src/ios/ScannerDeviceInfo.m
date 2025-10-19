@@ -2,7 +2,7 @@
 
 @implementation ScannerDeviceInfo
 
-- (instancetype)initWithName:(NSString *)name brand:(ScannerBrand)brand type:(ScannerType)type deviceId:(int)deviceId {
+- (instancetype)initWithName:(NSString *)name brand:(ScannerBrand)brand type:(ScannerType)type deviceId:(NSString *)deviceId {
     self = [super init];
     if (self) {
         _name = name;
@@ -18,7 +18,7 @@
         @"name": self.name ?: @"",
         @"brand": @(self.brand),
         @"type": @(self.type)
-        @"deviceId": @(self.deviceId)
+        @"deviceId": self.deviceId ?: @""
     } mutableCopy];
 
     // Optional info if available
@@ -27,7 +27,6 @@
     if (self.hardwareVersion) [dict setObject:self.hardwareVersion forKey:@"hardwareVersion"];
     if (self.firmwareVersion) [dict setObject:self.firmwareVersion forKey:@"firmwareVersion"];
     if (self.batteryLevel >= 0) [dict setObject:@(self.batteryLevel) forKey:@"batteryLevel"];
-    if (self.batteryStatus) [dict setObject:self.batteryStatus forKey:@"batteryStatus"];
     if (self.antennaMin) [dict setObject:@(self.antennaMin) forKey:@"antennaMin"];
     if (self.antennaMax) [dict setObject:@(self.antennaMax) forKey:@"antennaMax"];
     if (self.pScanPower) [dict setObject:@(self.pScanPower) forKey:@"pScanPower"];
@@ -47,7 +46,6 @@
     copy.hardwareVersion = self.hardwareVersion;
     copy.firmwareVersion = self.firmwareVersion;
     copy.batteryLevel = self.batteryLevel;
-    copy.batteryStatus = self.batteryStatus;
     copy.antennaMin = self.antennaMin;
     copy.antennaMax = self.antennaMax;
     copy.pScanPower = self.pScanPower;

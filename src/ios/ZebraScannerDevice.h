@@ -9,6 +9,7 @@
 #import "ScannerDevice.h"
 #import <ZebraRfidSdkFramework/ZebraRfidSdkFramework.h>
 #import <ZebraScannerFramework/ZebraScannerFramework.h>
+#import "ScannerDeviceInfo.h"
 
 @interface ZebraScannerDevice : NSObject <ScannerDevice, srfidISdkApiDelegate, ISbtSdkApiDelegate>
 
@@ -19,5 +20,7 @@
 
 @property (nonatomic, assign) int connectedBarcodeScannerId;
 @property (nonatomic, assign) int connectedRfidReaderId;
+
+@property (nonatomic, assign) int batteryLevel;
 
 @end
