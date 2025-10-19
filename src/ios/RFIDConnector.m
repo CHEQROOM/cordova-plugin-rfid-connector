@@ -107,22 +107,54 @@
 }
 
 - (void)disconnect:(CDVInvokedUrlCommand*)command {
-    if (currentScanner) {
-        [currentScanner disconnect:command commandDelegate:self.commandDelegate];
-        currentScanner = nil;
-    } else {
-        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"No scanner connected"];
+    [self.commandDelegate runInBackground:^{
+        CDVPluginResult* pluginResult = nil;
+
+        if (currentScanner && [currentScanner isConnected]) {
+            BOOL isDisconnected = [currentScanner disconnect];
+            currentScanner = nil;
+            if(isDisconnected){
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+            }else{
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unable to disconnect"];
+            }            
+        } else {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"No scanner connected"];
+        }
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-    }
+    }];
 }
 
 - (void)getDeviceInfo:(CDVInvokedUrlCommand*)command {
-    if (currentScanner) {
-        [currentScanner getDeviceInfo:command commandDelegate:self.commandDelegate];
-    } else {
-        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"No scanner connected"];
+    [self.commandDelegate runInBackground:^{
+        CDVPluginResult* pluginResult = nil;
+
+        if (currentScanner && [currentScanner isConnected]) {
+            ScannerDeviceInfo *deviceInfo = [currentScanner getDeviceInfo];
+
+            if(deviceInfo != nil){
+                NSError *error = nil;
+                NSString *status = @"true";
+                NSString *errorMsg = @"";
+                NSData *json = nil;
+                NSString *jsonMsg = nil;
+                NSDictionary *dict = @{@"data" : [deviceInfo toDictionary], @"errorMsg": errorMsg, @"status" : status};
+                if ([NSJSONSerialization isValidJSONObject:dict]) {
+                    json = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted error:&error];
+                    if (json != nil && error == nil) {
+                        jsonMsg = [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
+                    }
+                }
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:jsonMsg];
+            }else{
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unable to get device info"];
+            }
+        } else {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"No scanner connected"];
+            
+        }
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-    }
+    }];
 }
 
 - (void)scanRFIDs:(CDVInvokedUrlCommand*)command {
@@ -189,13 +221,15 @@
 }
 
 - (void)getPairingBarcode:(CDVInvokedUrlCommand*)command {
-    [self.commandDelegate runInBackground:^{
+    dispatch_async(dispatch_get_main_queue(), ^{
         id<ScannerDevice> scanner = [ScannerDeviceFactory getInstance:@"ZEBRA"];
         NSString *base64String = [currentScanner getPairingBarcode];
-       
-        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:base64String];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-    }];
+    
+        [self.commandDelegate runInBackground:^{
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:base64String];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        }];
+    });
 }
 
 @end

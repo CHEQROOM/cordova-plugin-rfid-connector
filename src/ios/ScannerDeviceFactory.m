@@ -13,9 +13,19 @@
 
 + (id<ScannerDevice>)getInstance:(NSString*)deviceType {
     if ([deviceType isEqualToString:@"TSL"]) {
-        return [[TSLScannerDevice alloc] init];
+        static TSLScannerDevice *tslInstance = nil;
+        static dispatch_once_t onceTokenTSL;
+        dispatch_once(&onceTokenTSL, ^{
+            tslInstance = [[TSLScannerDevice alloc] init];
+        });
+        return tslInstance;
     } else if ([deviceType isEqualToString:@"ZEBRA"]) {
-        return [[ZebraScannerDevice alloc] init];
+        static ZebraScannerDevice *zebraInstance = nil;
+        static dispatch_once_t onceTokenZebra;
+        dispatch_once(&onceTokenZebra, ^{
+            zebraInstance = [[ZebraScannerDevice alloc] init];
+        });
+        return zebraInstance;
     } else {
         return nil;
     }

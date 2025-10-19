@@ -14,7 +14,10 @@
 
 @property (nonatomic, strong) id<srfidISdkApi> rfidApi;
 @property (nonatomic, strong) id<ISbtSdkApi> barcodeApi;
-@property (nonatomic, strong) NSMutableArray<srfidReaderInfo *> *availableRFIDReaderList;
-@property (nonatomic, assign) int connectedReaderId; 
+
+@property (nonatomic, strong) NSMutableArray<ScannerDeviceInfo *> *deviceList;
+
+@property (nonatomic, assign) int connectedBarcodeScannerId;
+@property (nonatomic, assign) int connectedRfidReaderId;
 
 @end

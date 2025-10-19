@@ -20,9 +20,9 @@ typedef NS_ENUM(NSInteger, ScannerConnectionStatus) {
 
 /**
  * Connect to a device
-* @param name The name of the scanner
+* @param deviceId The id of the scanner
  */
-- (ScannerConnectionStatus *)connect:(NSString *) name;
+- (ScannerConnectionStatus *)connect:(NSString *) deviceId;
 
 /**
  * Check if device is still connected
@@ -31,10 +31,8 @@ typedef NS_ENUM(NSInteger, ScannerConnectionStatus) {
 
 /**
  * Disconnect from device
- * @param command The Cordova command
- * @param delegate The command delegate for sending results
  */
-- (void)disconnect:(CDVInvokedUrlCommand*)command commandDelegate:(NSObject<CDVCommandDelegate>*)delegate;
+- (BOOL)disconnect;
 
 /**
  * Get list of available devices
@@ -43,10 +41,8 @@ typedef NS_ENUM(NSInteger, ScannerConnectionStatus) {
 
 /**
  * Get device information
- * @param command The Cordova command
- * @param delegate The command delegate for sending results
  */
-- (void)getDeviceInfo:(CDVInvokedUrlCommand*)command commandDelegate:(NSObject<CDVCommandDelegate>*)delegate;
+- (ScannerDeviceInfo *)getDeviceInfo;
 
 /**
  * Scan for RFID tags

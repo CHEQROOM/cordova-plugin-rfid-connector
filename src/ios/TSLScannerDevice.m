@@ -11,20 +11,6 @@
 
 @implementation TSLScannerDevice
 
-static NSString *const ERROR_LABEL = @"Error: ";
-static NSString *const DEVICE_IS_ALREADY_CONNECTED = @"Device is already connected.";
-static NSString *const SCAN_POWER = @"scanPower";
-static NSString *const ANTENNA_MAX = @"antennaMax";
-static NSString *const ANTENNA_MIN = @"antennaMin";
-static NSString *const SERIAL_NUMBER = @"serialNumber";
-static NSString *const MANUFACTURER = @"manufacturer";
-static NSString *const FIRMWARE_VERSION = @"firmwareVersion";
-static NSString *const HARDWARE_VERSION = @"hardwareVersion";
-static NSString *const BATTERY_STATUS = @"batteryStatus";
-static NSString *const BATTERY_LEVEL = @"batteryLevel";
-static NSString *const DEVICE_NAME = @"deviceName";
-static NSString *const DEVICE_IS_NOT_CONNECTED = @"Device is not connected.";
-
 TSLBarcodeCommand *_barcodeResponder;
 TSLInventoryCommand *_inventoryResponder;
 TSLInventoryCommand *_inventorySearchResponder;
@@ -43,7 +29,7 @@ NSObject<CDVCommandDelegate>* subsCmdDelegate;
     return self.commander;
 }
 
-- (ScannerConnectionStatus *)connect:(NSString *) name {
+- (ScannerConnectionStatus *)connect:(NSString *) deviceId {
     EAAccessory *accessory = nil;
     TSLAsciiCommander* commander = [self getCommander];
 
@@ -89,25 +75,24 @@ NSObject<CDVCommandDelegate>* subsCmdDelegate;
     return [commander isConnected];    
 }
 
-- (void)disconnect:(CDVInvokedUrlCommand*)command commandDelegate:(NSObject<CDVCommandDelegate>*)delegate {
-    CDVPluginResult* pluginResult = nil;
-    NSString* disconnectMsg = @"n/a";
+- (BOOL)disconnect {
     TSLAsciiCommander* commander = [self getCommander];
-    if (command != nil && [commander isConnected]) {
-        [self removeAsyncResponder];
-        _inventoryResponder = nil;
-        _barcodeResponder = nil;
-        _asyncPluginResult = nil;
-        _asyncCommand = nil;
-        [commander disconnect];
-        self.scanPower = -1;
-        disconnectMsg = @"true";
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:disconnectMsg];
-    } else {
-        disconnectMsg = @"No connection exist to disconnect.";
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:disconnectMsg];
+    if(![commander isConnected]){
+        return false;
     }
-    [delegate sendPluginResult:pluginResult callbackId:command.callbackId];
+
+    [self removeAsyncResponder];
+    
+    _inventoryResponder = nil;
+    _barcodeResponder = nil;
+    _asyncPluginResult = nil;
+    _asyncCommand = nil;
+
+    [commander disconnect];
+    
+    self.scanPower = -1;
+    
+    return true;
 }
 
 - (NSArray<ScannerDeviceInfo *> *)getDeviceList {
@@ -121,80 +106,56 @@ NSObject<CDVCommandDelegate>* subsCmdDelegate;
     for (EAAccessory *obj in tslDevices) {
         ScannerDeviceInfo *scanner = [[ScannerDeviceInfo alloc] initWithName:obj.name
                                                                        brand:ScannerBrandTSL
-                                                                        type:ScannerTypeRFID];
+                                                                        type:ScannerTypeRFID
+                                                                    deviceId:obj.serialNumber];
         [dataArray addObject:scanner];
     }
 
     return [dataArray copy];
 }
 
-- (void)getDeviceInfo:(CDVInvokedUrlCommand*)command commandDelegate:(NSObject<CDVCommandDelegate>*)delegate {
-    CDVPluginResult* pluginResult = nil;
-    NSString* echo = nil;
-
-    if (command != nil) {
-        TSLAsciiCommander* commander = [self getCommander];
-        [self removeAsyncAndAddSyncResponder];
-        EAAccessory *accessory = nil;
-        NSError *error = nil;
-        NSString *status = @"true";
-        NSString *errorMsg = @"";
-        NSData *json = nil;
-        NSString *jsonMsg = nil;
-
-        if([commander isConnected]) {
-            TSLVersionInformationCommand* versionInformationCommand = [TSLVersionInformationCommand synchronousCommand];
-            [commander executeCommand:versionInformationCommand];
-
-            TSLBatteryStatusCommand* batteryStatusCommand = [TSLBatteryStatusCommand synchronousCommand];
-            [commander executeCommand:batteryStatusCommand];
-
-            TSLInventoryCommand* invCommand = [TSLInventoryCommand synchronousCommand];
-            invCommand.takeNoAction = TSL_TriState_YES;
-            invCommand.includeEPC = TSL_TriState_YES;
-            invCommand.includeTransponderRSSI = TSL_TriState_YES;
-            invCommand.captureNonLibraryResponses = YES;
-            invCommand.readParameters = YES;
-            [commander executeCommand:invCommand];
-
-            accessory = commander.connectedAccessory;
-
-            NSMutableDictionary *infoString = [[NSMutableDictionary alloc] init];
-            [infoString setObject:versionInformationCommand.serialNumber forKey:@"deviceName"];
-            [infoString setObject:[NSNumber numberWithInt:[batteryStatusCommand batteryLevel]] forKey:@"batteryLevel"];
-            [infoString setObject:@"n/a" forKey:@"batteryStatus"];
-            [infoString setObject:accessory.hardwareRevision forKey:@"hardwareVersion"];
-            [infoString setObject:versionInformationCommand.firmwareVersion forKey:@"firmwareVersion"];
-            [infoString setObject:versionInformationCommand.manufacturer forKey:@"manufacturer"];
-            [infoString setObject:versionInformationCommand.serialNumber forKey:@"serialNumber"];
-            [infoString setObject:[NSNumber numberWithInt:[TSLInventoryCommand minimumOutputPower]] forKey:@"antennaMin"];
-            [infoString setObject:[NSNumber numberWithInt:[TSLInventoryCommand maximumOutputPower]] forKey:@"antennaMax"];
-            [infoString setObject:[NSNumber numberWithInt:self.scanPower] forKey:@"pScanPower"];
-            [infoString setObject:[NSNumber numberWithInt:invCommand.outputPower] forKey:@"dScanPower"];
-
-            NSDictionary *dict = @{@"data" : infoString, @"errorMsg" : errorMsg, @"status" : status};
-            if ([NSJSONSerialization isValidJSONObject:dict]) {
-                json = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted error:&error];
-                if (json != nil && error == nil) {
-                    jsonMsg = [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
-                }
-            }
-            echo = jsonMsg;
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:echo];
-        } else {
-            status = @"false";
-            errorMsg = @"Device not connected.";
-            NSDictionary *dict = @{@"data" : [[NSMutableArray alloc] init], @"errorMsg" : errorMsg, @"status" : status};
-
-            if ([NSJSONSerialization isValidJSONObject:dict]) {
-                json = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted error:&error];
-                jsonMsg = [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
-            }
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:jsonMsg];
-        }
+- (ScannerDeviceInfo *)getDeviceInfo {
+    TSLAsciiCommander* commander = [self getCommander];
+    if(![commander isConnected]) {
+        return nil;
     }
-    [delegate sendPluginResult:pluginResult callbackId:command.callbackId];
+
+    [self removeAsyncAndAddSyncResponder];
+
+    EAAccessory *accessory = nil;
+
+    TSLVersionInformationCommand* versionInformationCommand = [TSLVersionInformationCommand synchronousCommand];
+    [commander executeCommand:versionInformationCommand];
+
+    TSLBatteryStatusCommand* batteryStatusCommand = [TSLBatteryStatusCommand synchronousCommand];
+    [commander executeCommand:batteryStatusCommand];
+
+    TSLInventoryCommand* invCommand = [TSLInventoryCommand synchronousCommand];
+    invCommand.takeNoAction = TSL_TriState_YES;
+    invCommand.includeEPC = TSL_TriState_YES;
+    invCommand.includeTransponderRSSI = TSL_TriState_YES;
+    invCommand.captureNonLibraryResponses = YES;
+    invCommand.readParameters = YES;
+    [commander executeCommand:invCommand];
+
+    accessory = commander.connectedAccessory;
+
+    ScannerDeviceInfo *info = [[ScannerDeviceInfo alloc] initWithName:accessory.name
+                                                    brand:ScannerBrandTSL
+                                                        type:ScannerTypeRFID];
+    info.serialNumber = versionInformationCommand.serialNumber;
+    info.manufacturer = versionInformationCommand.manufacturer;
+    info.hardwareVersion = accessory.hardwareRevision;
+    info.firmwareVersion = versionInformationCommand.firmwareVersion;
+    info.batteryLevel = [batteryStatusCommand batteryLevel];
+    info.antennaMin = [TSLInventoryCommand minimumOutputPower];
+    info.antennaMax = [TSLInventoryCommand maximumOutputPower];
+    info.pScanPower = self.scanPower;
+    info.dScanPower = invCommand.outputPower;
+
     [self removeSyncAndAddAsyncResponder];
+
+    return info;
 }
 
 - (void)scanRFIDs:(CDVInvokedUrlCommand*)command commandDelegate:(NSObject<CDVCommandDelegate>*)delegate {
