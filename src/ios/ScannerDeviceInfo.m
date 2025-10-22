@@ -17,7 +17,7 @@
     NSMutableDictionary *dict = [@{
         @"name": self.name ?: @"",
         @"brand": @(self.brand),
-        @"type": @(self.type)
+        @"type": @(self.type),
         @"deviceId": self.deviceId ?: @""
     } mutableCopy];
 

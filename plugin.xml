@@ -59,15 +59,17 @@
           <source-file src="src/ios/ScannerDevice.h" />
           <source-file src="src/ios/ScannerDeviceFactory.m" />
           <header-file src="src/ios/ScannerDeviceFactory.h" />
-          <source-file src="src/ios/TSLScannerDevice.m" />
-          <header-file src="src/ios/TSLScannerDevice.h" />
-          <source-file src="src/ios/ZebraScannerDevice.m" />
-          <header-file src="src/ios/ZebraScannerDevice.h" />
+          <source-file src="src/ios/TSL/TSLScannerDevice.m" />
+          <header-file src="src/ios/TSL/TSLScannerDevice.h" />
+          <source-file src="src/ios/Zebra/Scanner/ZebraScannerDevice.m" />
+          <header-file src="src/ios/Zebra/Scanner/ZebraScannerDevice.h" />
+          <source-file src="src/ios/Zebra/RFID/ZebraRfidDevice.m" />
+          <header-file src="src/ios/Zebra/RFID/ZebraRfidDevice.h" />
           <header-file src="src/ios/ScannerDeviceInfo.h" />
           <source-file src="src/ios/ScannerDeviceInfo.m" />
-  	      <framework src="src/ios/TSLAsciiCommands.framework" custom="true" embed="false" />
-          <framework src="src/ios/ZebraRfidSdkFramework.xcframework" custom="true" embed="true" />
-          <framework src="src/ios/ZebraScannerFramework.xcframework" custom="true" embed="true" />
+  	      <framework src="src/ios/TSL/TSLAsciiCommands.framework" custom="true" embed="false" />
+          <framework src="src/ios/Zebra/RFID/ZebraRfidSdkFramework.xcframework" custom="true" embed="true" />
+          <framework src="src/ios/Zebra/Scanner/ZebraScannerFramework.xcframework" custom="true" embed="true" />
   		  <framework src="Foundation.framework" weak="true" />
           <framework src="CoreGraphics.framework" weak="true" />
           <framework src="UIKit.framework" weak="true" />

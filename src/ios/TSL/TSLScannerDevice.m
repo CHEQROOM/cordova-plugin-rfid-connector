@@ -509,7 +509,7 @@ NSObject<CDVCommandDelegate>* subsCmdDelegate;
         _asyncSearchPluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:jsonMsg];
     } else {
         status = @"false";
-        errorMsg = DEVICE_IS_NOT_CONNECTED;
+        errorMsg = @"DEVICE_IS_NOT_CONNECTED";
         NSDictionary *dict = @{@"data" : [[NSMutableArray alloc] init], @"errorMsg" : errorMsg, @"status" : status};
 
         if ([NSJSONSerialization isValidJSONObject:dict]) {
@@ -539,7 +539,7 @@ NSObject<CDVCommandDelegate>* subsCmdDelegate;
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"SEARCH DEACTIVATED"];
         [delegate sendPluginResult:pluginResult callbackId:command.callbackId];
     } else {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:DEVICE_IS_NOT_CONNECTED];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"DEVICE_IS_NOT_CONNECTED"];
         [delegate sendPluginResult:pluginResult callbackId:command.callbackId];
     }
 }
