@@ -1,3 +1,0 @@
-@interface EventReceiver : NSObject <ISbtSdkApiDelegate> {
-
-}

@@ -7,7 +7,7 @@
 #import <ZebraRfidSdkFramework/ZebraRfidSdkFramework.h>
 #import "ZebraScannerDevice.h"
 #import "ScannerDeviceInfo.h"
-#import "EventReceiver.h"
+#import "RfidEventReceiver.h"
 #import <Cordova/CDV.h>
 #import <UIKit/UIKit.h>
 
@@ -17,7 +17,7 @@
     if (self) {
         self.rfidApi = [srfidSdkFactory createRfidSdkApiInstance];
 
-        self.eventListener = [[EventReceiver alloc] init];
+        self.eventListener = [[RfidEventReceiver alloc] init];
         [self.rfidApi sbtSetDelegate:self.eventListener];
 
         [self.rfidApi srfidSetOperationalMode:SRFID_OPMODE_ALL];

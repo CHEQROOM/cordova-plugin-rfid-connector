@@ -1,4 +1,4 @@
-@implementation EventReceiver
+@implementation ScannerEventReceiver
 
 -(instancetype)initWithInstance:(ZebraScannerDevice*)scannerDevice {
   if((self = [super init])){

@@ -1,0 +1,3 @@
+@interface ScannerEventReceiver : NSObject <ISbtSdkApiDelegate> {
+
+}

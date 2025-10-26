@@ -1,4 +1,4 @@
-@implementation EventReceiver
+@implementation RfidEventReceiver
 
 -(instancetype)initWithInstance:(ZebraRfidDevice*)rfidDevice {
   if((self = [super init])){

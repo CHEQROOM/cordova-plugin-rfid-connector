@@ -7,7 +7,7 @@
 #import <ZebraScannerFramework/ZebraScannerFramework.h>
 #import "ZebraScannerDevice.h"
 #import "ScannerDeviceInfo.h"
-#import "EventReceiver.h"
+#import "ScannerEventReceiver.h"
 #import <Cordova/CDV.h>
 #import <UIKit/UIKit.h>
 
@@ -17,7 +17,7 @@
     if (self) {
         self.barcodeApi = [SbtSdkFactory createSbtSdkApiInstance];
 
-        self.eventListener = [[EventReceiver alloc] init];
+        self.eventListener = [[ScannerEventReceiver alloc] init];
         [self.barcodeApi sbtSetDelegate:self.eventListener];
         
         [self.barcodeApi sbtSetOperationalMode:SBT_OPMODE_ALL];

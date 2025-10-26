@@ -61,12 +61,12 @@
           <header-file src="src/ios/ScannerDeviceFactory.h" />
           <source-file src="src/ios/TSL/TSLScannerDevice.m" />
           <header-file src="src/ios/TSL/TSLScannerDevice.h" />
-          <source-file src="src/ios/Zebra/Scanner/EventReceiver.m" />
-          <header-file src="src/ios/Zebra/Scanner/EventReceiver.h" />
+          <source-file src="src/ios/Zebra/Scanner/ScannerEventReceiver.m" />
+          <header-file src="src/ios/Zebra/Scanner/ScannerEventReceiver.h" />
           <source-file src="src/ios/Zebra/Scanner/ZebraScannerDevice.m" />
           <header-file src="src/ios/Zebra/Scanner/ZebraScannerDevice.h" />
-          <source-file src="src/ios/Zebra/RFID/EventReceiver.m" />
-          <header-file src="src/ios/Zebra/RFID/EventReceiver.h" />
+          <source-file src="src/ios/Zebra/RFID/RfidEventReceiver.m" />
+          <header-file src="src/ios/Zebra/RFID/RfidEventReceiver.h" />
           <source-file src="src/ios/Zebra/RFID/ZebraRfidDevice.m" />
           <header-file src="src/ios/Zebra/RFID/ZebraRfidDevice.h" />
           <header-file src="src/ios/ScannerDeviceInfo.h" />
