@@ -106,8 +106,8 @@ NSObject<CDVCommandDelegate>* subsCmdDelegate;
     NSMutableArray *dataArray = [[NSMutableArray alloc] init];
     for (EAAccessory *obj in tslDevices) {
         ScannerDeviceInfo *scanner = [[ScannerDeviceInfo alloc] initWithName:obj.name
-                                                                       brand:ScannerBrandTSL
-                                                                        type:ScannerTypeRFID
+                                                                       brand:DeviceBrandTSL
+                                                                        type:DeviceTypeRFID
                                                                     deviceId:obj.serialNumber];
         [dataArray addObject:scanner];
     }
@@ -142,8 +142,8 @@ NSObject<CDVCommandDelegate>* subsCmdDelegate;
     accessory = commander.connectedAccessory;
 
     ScannerDeviceInfo *info = [[ScannerDeviceInfo alloc] initWithName:accessory.name
-                                                    brand:ScannerBrandTSL
-                                                        type:ScannerTypeRFID
+                                                    brand:DeviceBrandTSL
+                                                        type:DeviceTypeRFID
                                                     deviceId:versionInformationCommand.serialNumber];
     info.serialNumber = versionInformationCommand.serialNumber;
     info.manufacturer = versionInformationCommand.manufacturer;

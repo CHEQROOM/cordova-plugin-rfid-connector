@@ -11,15 +11,15 @@
 
 @implementation ScannerDeviceFactory
 
-+ (id<ScannerDevice>)getInstance:(NSString*)deviceType {
-    if ([deviceType isEqualToString:@"TSL"]) {
++ (id<ScannerDevice>)getInstance:(DeviceBrand *)deviceBrand {
+    if (deviceBrand == DeviceBrandTSL) {
         static TSLScannerDevice *tslInstance = nil;
         static dispatch_once_t onceTokenTSL;
         dispatch_once(&onceTokenTSL, ^{
             tslInstance = [[TSLScannerDevice alloc] init];
         });
         return tslInstance;
-    } else if ([deviceType isEqualToString:@"ZEBRA"]) {
+    } else if (deviceBrand == DeviceBrandZebra) {
         static ZebraScannerDevice *zebraInstance = nil;
         static dispatch_once_t onceTokenZebra;
         dispatch_once(&onceTokenZebra, ^{

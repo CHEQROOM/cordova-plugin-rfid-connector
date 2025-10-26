@@ -2,7 +2,7 @@
 
 @implementation ScannerDeviceInfo
 
-- (instancetype)initWithName:(NSString *)name brand:(ScannerBrand)brand type:(ScannerType)type deviceId:(NSString *)deviceId {
+- (instancetype)initWithName:(NSString *)name brand:(DeviceBrand)brand type:(DeviceType)type deviceId:(NSString *)deviceId {
     self = [super init];
     if (self) {
         _name = name;
@@ -16,8 +16,8 @@
 - (NSDictionary *)toDictionary {
     NSMutableDictionary *dict = [@{
         @"name": self.name ?: @"",
-        @"brand": @(self.brand),
-        @"type": @(self.type),
+        @"brand": NSStringFromDeviceBrand(self.brand),
+        @"type": NSStringFromDeviceType(self.type),
         @"deviceId": self.deviceId ?: @""
     } mutableCopy];
 

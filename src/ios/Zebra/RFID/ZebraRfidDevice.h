@@ -6,21 +6,18 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "ScannerDevice.h"
 #import <ZebraRfidSdkFramework/ZebraRfidSdkFramework.h>
-#import <ZebraScannerFramework/ZebraScannerFramework.h>
+#import "ScannerDevice.h"
 #import "ScannerDeviceInfo.h"
+#import "EventReceiver.h"
 
-@interface ZebraScannerDevice : NSObject <ScannerDevice, srfidISdkApiDelegate, ISbtSdkApiDelegate>
+@interface ZebraScannerDevice : NSObject <ScannerDevice, ZebraDeviceBase, srfidISdkApiDelegate>
 
 @property (nonatomic, strong) id<srfidISdkApi> rfidApi;
-@property (nonatomic, strong) id<ISbtSdkApi> barcodeApi;
-
+@property (strong, nonatomic) EventReceiver *eventListener;
 @property (nonatomic, strong) NSMutableArray<ScannerDeviceInfo *> *deviceList;
 
-@property (nonatomic, assign) int connectedBarcodeScannerId;
-@property (nonatomic, assign) int connectedRfidReaderId;
-
+@property (nonatomic, assign) int connectedReaderId;
 @property (nonatomic, assign) int batteryLevel;
 
 @end

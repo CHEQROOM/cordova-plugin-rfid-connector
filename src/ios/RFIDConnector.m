@@ -6,7 +6,7 @@
 #import "ScannerDeviceInfo.h"
 
 @interface RFIDConnector : CDVPlugin {
-    NSString *scannerType;
+    DeviceBrand *deviceBrand;
     id<ScannerDevice> currentScanner;
 }
 
@@ -16,11 +16,16 @@
 
 - (void)getDeviceList:(CDVInvokedUrlCommand*)command {
     [self.commandDelegate runInBackground:^{
-        NSArray *supportedTypes = @[@"TSL", @"ZEBRA"];
+        NSArray<NSNumber *> *supportedDeviceBrands = @[
+            @(DeviceBrandZebra),
+            @(DeviceBrandTSL)
+        ];
         NSMutableArray *allDevices = [NSMutableArray array];
 
-        for (NSString *type in supportedTypes) {
-            id<ScannerDevice> scanner = [ScannerDeviceFactory getInstance:type];
+        for (NSNumber *supportedDeviceBrand in supportedDeviceBrands) {
+            ScannerBrand deviceBrand = supportedDeviceBrand;
+
+            id<ScannerDevice> scanner = [ScannerDeviceFactory getInstance:deviceBrand];
             if (scanner) {
                 NSArray *devices = [scanner getDeviceList];
                 [allDevices addObjectsFromArray:[devices valueForKey:@"toDictionary"]];
@@ -51,8 +56,9 @@
 
 - (void)connect:(CDVInvokedUrlCommand*)command {
     [self.commandDelegate runInBackground:^{
-        scannerType = [command.arguments objectAtIndex:0];
+        deviceBrand = DeviceBrandFromString([command.arguments objectAtIndex:0]);
         NSString *scannerName = [command.arguments objectAtIndex:1];
+        NSString *scannerType = DeviceTypeFromString([command.arguments objectAtIndex:2]);
 
         CDVPluginResult* pluginResult = nil;
         if (scannerName == nil || [scannerName length] == 0) {
@@ -61,7 +67,7 @@
             return;
         }
 
-        currentScanner = [ScannerDeviceFactory getInstance:scannerType];
+        currentScanner = [ScannerDeviceFactory getInstance:deviceBrand];
         if(currentScanner == nil){
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unsupported scanner type"];
             [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];

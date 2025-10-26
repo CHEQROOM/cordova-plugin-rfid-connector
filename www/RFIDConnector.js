@@ -12,10 +12,12 @@ RFIDConnector.prototype.getDeviceList = function (successCallback,
 		'getDeviceList', []);
 }
 
-RFIDConnector.prototype.connect = function (deviceType, deviceID,
+RFIDConnector.prototype.connect = function (deviceBrand, deviceID, deviceType,
 	successCallback, failureCallback) {
+	deviceType = deviceType || "RFID";
+
 	exec(successCallback, failureCallback, 'RFIDConnector', 'connect', [
-		deviceType, deviceID]);
+		deviceBrand, deviceID, deviceType]);
 }
 
 RFIDConnector.prototype.isConnected = function (successCallback,
