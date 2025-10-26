@@ -69,6 +69,8 @@
           <header-file src="src/ios/Zebra/RFID/RfidEventReceiver.h" />
           <source-file src="src/ios/Zebra/RFID/ZebraRfidDevice.m" />
           <header-file src="src/ios/Zebra/RFID/ZebraRfidDevice.h" />
+          <source-file src="src/ios/Zebra/ZebraDeviceBase.m" />
+          <header-file src="src/ios/Zebra/ZebraDeviceBase.h" />
           <header-file src="src/ios/ScannerDeviceInfo.h" />
           <source-file src="src/ios/ScannerDeviceInfo.m" />
   	      <framework src="src/ios/TSL/TSLAsciiCommands.framework" custom="true" embed="false" />
