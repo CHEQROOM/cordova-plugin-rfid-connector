@@ -1,3 +1,4 @@
+#import "ZebraDeviceBase.h"
 
 @implementation ZebraDeviceBase
 

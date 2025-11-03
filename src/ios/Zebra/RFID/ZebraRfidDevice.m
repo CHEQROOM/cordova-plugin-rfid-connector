@@ -5,20 +5,20 @@
 //  Created by Zebra Scanner Device implementation
 //
 #import <ZebraRfidSdkFramework/ZebraRfidSdkFramework.h>
-#import "ZebraScannerDevice.h"
 #import "ScannerDeviceInfo.h"
-#import "RfidEventReceiver.h"
 #import <Cordova/CDV.h>
 #import <UIKit/UIKit.h>
+#import "ZebraRfidDevice.h"
+#import "RfidEventReceiver.h"
 
-@implementation ZebraScannerDevice
+@implementation ZebraRfidDevice
 - (instancetype)init {
     self = [super init];
     if (self) {
         self.rfidApi = [srfidSdkFactory createRfidSdkApiInstance];
 
         self.eventListener = [[RfidEventReceiver alloc] init];
-        [self.rfidApi sbtSetDelegate:self.eventListener];
+        [self.rfidApi srfidSetDelegate:self.eventListener];
 
         [self.rfidApi srfidSetOperationalMode:SRFID_OPMODE_ALL];
         [self.rfidApi srfidSubsribeForEvents:(SRFID_EVENT_READER_APPEARANCE |
@@ -29,7 +29,7 @@
         [self.rfidApi srfidEnableAvailableReadersDetection:YES];
         [self.rfidApi srfidEnableAutomaticSessionReestablishment:YES];
 
-        self.connectedRfidReaderId = nil;
+        self.connectedReaderId = nil;
 
         self.deviceList = [NSMutableArray array];
     }
@@ -64,9 +64,9 @@
     ScannerDeviceInfo *deviceInfo = [self getDeviceInfoById:deviceId];
     if (deviceInfo == nil) {
         return ScannerConnectionStatusNotFound;
-    }else if(self.connectedRfidReaderId == deviceId){
+    }else if(self.connectedReaderId == deviceId){
         return ScannerConnectionStatusAlreadyConnected;
-    }else if(self.connectedRfidReaderId != deviceId){
+    }else if(self.connectedReaderId != deviceId){
         [self disconnect];
     }
 
@@ -78,34 +78,34 @@
     return ScannerConnectionStatusSuccess;
 }
 - (BOOL)disconnect {
-    if(self.connectedRfidReaderId == nil){
+    if(self.connectedReaderId == nil){
         return false;
     }
 
-    SRFID_RESULT rfidResult = [self.rfidApi srfidTerminateCommunicationSession:self.connectedRfidReaderId];
+    SRFID_RESULT rfidResult = [self.rfidApi srfidTerminateCommunicationSession:self.connectedReaderId];
     if(rfidResult != SRFID_RESULT_SUCCESS){
         return false;
     }
-    self.connectedRfidReaderId = nil;
+    self.connectedReaderId = nil;
 
     return true;
 }
 
 
 - (ScannerDeviceInfo *)getDeviceInfo {
-    if(self.connectedRfidReaderId == nil){
+    if(self.connectedReaderId == nil){
         return nil;
     }
 
-    [self.rfidApi srfidRequestBatteryStatus:self.connectedRfidReaderId];
+    [self.rfidApi srfidRequestBatteryStatus:self.connectedReaderId];
 
     srfidReaderCapabilitiesInfo *capabilities = [[srfidReaderCapabilitiesInfo alloc] init];
     NSString *error_response = nil;
     
-    SRFID_RESULT result = [self.rfidApi srfidGetReaderCapabilitiesInfo:self.connectedRfidReaderId aReaderCapabilitiesInfo:&capabilities aStatusMessage:&error_response];
+    SRFID_RESULT result = [self.rfidApi srfidGetReaderCapabilitiesInfo:self.connectedReaderId aReaderCapabilitiesInfo:&capabilities aStatusMessage:&error_response];
     if (SRFID_RESULT_SUCCESS == result) {
 
-        ScannerDeviceInfo *deviceInfo = [self getDeviceInfoById: [@(self.connectedRfidReaderId) stringValue]];    
+        ScannerDeviceInfo *deviceInfo = [self getDeviceInfoById: [@(self.connectedReaderId) stringValue]];    
         deviceInfo.serialNumber = [capabilities getSerialNumber];
         deviceInfo.manufacturer = [capabilities getManufacturer];
         deviceInfo.hardwareVersion = [capabilities getAsciiVersion];
@@ -121,7 +121,7 @@
     return nil;
 }
 - (BOOL)isConnected {
-    return self.connectedRfidReaderId != nil;    
+    return self.connectedReaderId != nil;    
  }
 - (void)subscribeScanner:(CDVInvokedUrlCommand *)command commandDelegate:(NSObject<CDVCommandDelegate> *)delegate { }
 - (void)unsubscribeScanner:(CDVInvokedUrlCommand *)command commandDelegate:(NSObject<CDVCommandDelegate> *)delegate { }

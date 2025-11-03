@@ -12,9 +12,10 @@
 
 /**
  * Get scanner device instance based on type
- * @param deviceType The type of scanner (TSL, ZEBRA, etc.)
+ * @param deviceBrand The brand of scanner (TSL, ZEBRA, etc.)
+ * @param deviceType The type of scanner (RFID, Barcode)
  * @return ScannerDevice instance or nil if type not supported
  */
-+ (id<ScannerDevice>)getInstance:(NSString*)deviceType;
++ (id<ScannerDevice>)getInstance:(DeviceBrand*)deviceBrand deviceType:(DeviceType *)deviceType;
 
 @end 

@@ -1,3 +1,6 @@
+#import <Foundation/Foundation.h>
+#import "ScannerDeviceInfo.h"
+
 @interface ZebraDeviceBase : NSObject
 
 @property (strong, nonatomic) NSMutableArray<ScannerDeviceInfo *> *deviceList;

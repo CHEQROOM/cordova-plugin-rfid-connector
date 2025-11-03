@@ -10,8 +10,9 @@
 #import "ScannerDevice.h"
 #import "ScannerDeviceInfo.h"
 #import "RfidEventReceiver.h"
+#import "ZebraDeviceBase.h"
 
-@interface ZebraScannerDevice : NSObject <ScannerDevice, ZebraDeviceBase, srfidISdkApiDelegate>
+@interface ZebraRfidDevice : ZebraDeviceBase <ScannerDevice>
 
 @property (nonatomic, strong) id<srfidISdkApi> rfidApi;
 @property (strong, nonatomic) RfidEventReceiver *eventListener;

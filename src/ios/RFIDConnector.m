@@ -23,9 +23,9 @@
         NSMutableArray *allDevices = [NSMutableArray array];
 
         for (NSNumber *supportedDeviceBrand in supportedDeviceBrands) {
-            ScannerBrand deviceBrand = supportedDeviceBrand;
+            DeviceBrand deviceBrand = DeviceBrandFromString([supportedDeviceBrand stringValue]);
 
-            id<ScannerDevice> scanner = [ScannerDeviceFactory getInstance:deviceBrand];
+            id<ScannerDevice> scanner = [ScannerDeviceFactory getInstance:deviceBrand deviceType:DeviceTypeRFID];
             if (scanner) {
                 NSArray *devices = [scanner getDeviceList];
                 [allDevices addObjectsFromArray:[devices valueForKey:@"toDictionary"]];
@@ -57,23 +57,23 @@
 - (void)connect:(CDVInvokedUrlCommand*)command {
     [self.commandDelegate runInBackground:^{
         deviceBrand = DeviceBrandFromString([command.arguments objectAtIndex:0]);
-        NSString *scannerName = [command.arguments objectAtIndex:1];
-        NSString *scannerType = DeviceTypeFromString([command.arguments objectAtIndex:2]);
+        NSString *deviceName = [command.arguments objectAtIndex:1];
+        DeviceType *deviceType = DeviceTypeFromString([command.arguments objectAtIndex:2]);
 
         CDVPluginResult* pluginResult = nil;
-        if (scannerName == nil || [scannerName length] == 0) {
+        if (deviceName == nil || [deviceName length] == 0) {
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Device name is empty"];
             [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
             return;
         }
 
-        currentScanner = [ScannerDeviceFactory getInstance:deviceBrand];
+        currentScanner = [ScannerDeviceFactory getInstance:deviceBrand deviceType:DeviceTypeRFID];
         if(currentScanner == nil){
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unsupported scanner type"];
             [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
         }
 
-        ScannerConnectionStatus status = [currentScanner connect:scannerName];
+        ScannerConnectionStatus status = [currentScanner connect:deviceName];
         if(status == ScannerConnectionStatusSuccess){
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
         } else {
@@ -228,7 +228,7 @@
 
 - (void)getPairingBarcode:(CDVInvokedUrlCommand*)command {
     dispatch_async(dispatch_get_main_queue(), ^{
-        id<ScannerDevice> scanner = [ScannerDeviceFactory getInstance:@"ZEBRA"];
+        id<ScannerDevice> scanner = [ScannerDeviceFactory getInstance:@"ZEBRA" deviceType:DeviceTypeBarcode];
         NSString *base64String = [currentScanner getPairingBarcode];
     
         [self.commandDelegate runInBackground:^{

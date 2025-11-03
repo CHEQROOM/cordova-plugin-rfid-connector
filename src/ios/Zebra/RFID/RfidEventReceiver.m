@@ -1,13 +1,16 @@
+#import "RfidEventReceiver.h"
+#import "ZebraRfidDevice.h"
+
 @implementation RfidEventReceiver
 
 -(instancetype)initWithInstance:(ZebraRfidDevice*)rfidDevice {
   if((self = [super init])){
-    _rfidDevice=rfidDevice;
+    self.rfidDevice=rfidDevice;
   }
   return self;
 
 }
-static int connectedReaderId
+static int connectedReaderId;
 static int batteryLevel;
 
 +(int) readerId{
@@ -30,13 +33,13 @@ static int batteryLevel;
                                               brand:DeviceBrandZebra
                                                type:DeviceTypeRFID
                                            deviceId:[@(readerId) stringValue]];
-    [_rfidDevice addDevice: deviceInfo];
+    [self.rfidDevice addDevice: deviceInfo];
 
     NSLog(@"RFID reader has appeared: name = %@", readerName);
 }
 -(void)srfidEventReaderDisappeared:(int)readerID {
     NSLog(@"RFID reader has disappeared: ID = %d", readerID);
-    [_rfidDevice removeDevice: readerID];
+    [self.rfidDevice removeDevice: readerID];
 }
 - (void)srfidEventCommunicationSessionEstablished:(srfidReaderInfo *)activeReader { 
     NSLog(@"Rfid Reader connected");

@@ -1,4 +1,11 @@
-@interface RfidEventReceiver : NSObject <srfidISdkApiDelegate> {
-    @property (strong) ZebraRfidDevice *rfidDevice;
-    @property (strong) srfidReaderInfo *reader;
-}
+#import <Foundation/Foundation.h>
+#import <ZebraRfidSdkFramework/ZebraRfidSdkFramework.h>
+
+@class ZebraRfidDevice;
+
+@interface RfidEventReceiver : NSObject <srfidISdkApiDelegate>
+
+@property (nonatomic, strong) ZebraRfidDevice *rfidDevice;
+- (instancetype)initWithInstance:(ZebraRfidDevice *)rfidDevice;
+
+@end

@@ -1,13 +1,16 @@
+#import "ScannerEventReceiver.h"
+#import "ZebraScannerDevice.h"
+
 @implementation ScannerEventReceiver
 
 -(instancetype)initWithInstance:(ZebraScannerDevice*)scannerDevice {
   if((self = [super init])){
-    _scannerDevice=scannerDevice;
+    self.scannerDevice=scannerDevice;
   }
   return self;
 
 }
-static int connectedReaderId
+static int connectedReaderId;
 static int batteryLevel;
 
 - (void)sbtEventCommunicationSessionEstablished:(SbtScannerInfo*)activeScanner {
@@ -28,12 +31,12 @@ static int batteryLevel;
                                               brand:DeviceBrandZebra
                                                type:DeviceTypeBarcode
                                            deviceId:[@(scannerId) stringValue]];
-    [_scannerDevice addDevice: deviceInfo];
+    [self.scannerDevice addDevice: deviceInfo];
 
 };
 - (void)sbtEventScannerDisappeared:(int)scannerID {
     NSLog(@"Barcode Reader dissapeared");
-    [_scannerDevice removeDevice: scannerID];
+    [self.scannerDevice removeDevice: scannerID];
 };
 - (void)sbtEventBarcode:(NSString*)barcodeData barcodeType:(int)barcodeType fromScanner:(int)scannerID {
     NSLog(@"Barcode scanned %@", barcodeData);

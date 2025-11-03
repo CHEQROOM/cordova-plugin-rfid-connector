@@ -10,8 +10,9 @@
 #import "ScannerDevice.h"
 #import "ScannerDeviceInfo.h"
 #import "ScannerEventReceiver.h"
+#import "ZebraDeviceBase.h"
 
-@interface ZebraScannerDevice : NSObject <ScannerDevice, ZebraDeviceBase, ISbtSdkApiDelegate>
+@interface ZebraScannerDevice : ZebraDeviceBase <ScannerDevice>
 
 @property (nonatomic, strong) id<ISbtSdkApi> barcodeApi;
 @property (strong, nonatomic) ScannerEventReceiver *eventListener;
