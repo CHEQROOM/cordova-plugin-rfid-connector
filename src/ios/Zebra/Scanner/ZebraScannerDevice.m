@@ -10,6 +10,7 @@
 #import "ScannerEventReceiver.h"
 #import <Cordova/CDV.h>
 #import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
 
 @implementation ZebraScannerDevice
 - (instancetype)init {
@@ -91,33 +92,49 @@
     return true;
 }
 
-
 - (ScannerDeviceInfo *)getDeviceInfo {
-    if(self.connectedBarcodeScannerId == nil){
+    if (self.connectedBarcodeScannerId == nil) {
         return nil;
     }
 
-   NSMutableString *outXml = [NSMutableString new];
-    SBT_RESULT result = [self.sdk sbtRsmAttributeGetAll:self.connectedScannerId
-                                               aOutXML:outXml
-                                               aStatus:nil];
+    NSMutableString *outXml = [NSMutableString new];
+
+    // Build the RSM "Get All Attributes" XML command
+    NSString *inXml = [NSString stringWithFormat:@"<inArgs><scannerID>%d</scannerID></inArgs>", self.connectedBarcodeScannerId];
+
+    SBT_RESULT result = [self.barcodeApi sbtExecuteCommand:SBT_RSM_ATTR_GETALL
+                                                   aInXML:inXml
+                                                  aOutXML:&outXml
+                                                forScanner:self.connectedBarcodeScannerId];
 
     if (result != SBT_RESULT_SUCCESS) {
         NSLog(@"Failed to get attributes: %d", result);
         return nil;
     }
 
-    ScannerDeviceInfo *deviceInfo = [self getDeviceInfoById:[@(self.connectedScannerId) stringValue]];
-    deviceInfo.serialNumber    = [self parseRsmXml:outXml forAttribute:SBT_ATTR_ID_SERIAL_NUMBER];
-    deviceInfo.manufacturer    = [self parseRsmXml:outXml forAttribute:SBT_ATTR_ID_MANUFACTURER];
-    deviceInfo.firmwareVersion = [self parseRsmXml:outXml forAttribute:SBT_ATTR_ID_FW_VERSION];
-    deviceInfo.hardwareVersion = [self parseRsmXml:outXml forAttribute:SBT_ATTR_ID_MODEL_NUMBER];
-    deviceInfo.batteryLevel    = [[self parseRsmXml:outXml forAttribute:SBT_ATTR_ID_BATTERY_STATUS] intValue];
+    ScannerDeviceInfo *deviceInfo = [self getDeviceInfoById:[@(self.connectedBarcodeScannerId) stringValue]];
+
+    deviceInfo.serialNumber    = [self parseRsmXml:outXml forAttribute:@"serialNumber"];
+    deviceInfo.manufacturer    = [self parseRsmXml:outXml forAttribute:@"manufacturer"];
+    deviceInfo.firmwareVersion = [self parseRsmXml:outXml forAttribute:@"fwVersion"];
+    deviceInfo.hardwareVersion = [self parseRsmXml:outXml forAttribute:@"modelNumber"];
+    deviceInfo.batteryLevel    = [[self parseRsmXml:outXml forAttribute:@"batteryStatus"] intValue];
 
     return deviceInfo;
+}
 
+
+- (NSString *)parseRsmXml:(NSString *)xml forAttribute:(NSString *)attribute {
+    NSString *pattern = [NSString stringWithFormat:@"<%@(.*?)>(.*?)</%@>", attribute, attribute];
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:pattern options:0 error:nil];
+    NSTextCheckingResult *match = [regex firstMatchInString:xml options:0 range:NSMakeRange(0, xml.length)];
+    if (match) {
+        NSRange valueRange = [match rangeAtIndex:2];
+        return [xml substringWithRange:valueRange];
+    }
     return nil;
 }
+
 - (BOOL)isConnected {
     return self.connectedBarcodeScannerId != nil;    
  }
