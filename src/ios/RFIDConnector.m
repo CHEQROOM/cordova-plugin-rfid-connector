@@ -60,7 +60,7 @@
     NSArray<NSNumber *> *supportedDeviceBrands = @[@(DeviceBrandZebra), @(DeviceBrandTSL)];
     
     for (NSNumber *brand in supportedDeviceBrands) {
-        DeviceBrand deviceBrand = DeviceBrandFromString([brand stringValue]);
+        DeviceBrand deviceBrand = (DeviceBrand)[brand integerValue];
         id<ScannerDevice> scanner = [ScannerDeviceFactory getInstance:deviceBrand deviceType:DeviceTypeRFID];
         if (scanner) {
             NSArray *devices = [scanner getDeviceList];
