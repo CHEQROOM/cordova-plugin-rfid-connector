@@ -1,5 +1,5 @@
 /********* RFIDConnector.m Cordova Plugin Implementation *******/
-
+#import <Foundation/Foundation.h>
 #import <Cordova/CDV.h>
 #import "ScannerDevice.h"
 #import "ScannerDeviceFactory.h"
@@ -8,50 +8,83 @@
 @interface RFIDConnector : CDVPlugin {
     DeviceBrand *deviceBrand;
     id<ScannerDevice> currentScanner;
+    NSString *_deviceListCallbackId;
 }
 
 @end
 
 @implementation RFIDConnector
 
-- (void)getDeviceList:(CDVInvokedUrlCommand*)command {
-    [self.commandDelegate runInBackground:^{
-        NSArray<NSNumber *> *supportedDeviceBrands = @[
-            @(DeviceBrandZebra),
-            @(DeviceBrandTSL)
-        ];
-        NSMutableArray *allDevices = [NSMutableArray array];
+- (void)pluginInitialize {
+    [super pluginInitialize];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(onDeviceListChanged:)
+                                                 name:@"ScannerDeviceListUpdated"
+                                               object:nil];
+}
 
-        for (NSNumber *supportedDeviceBrand in supportedDeviceBrands) {
-            DeviceBrand deviceBrand = DeviceBrandFromString([supportedDeviceBrand stringValue]);
+- (void)onAppTerminate {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
 
-            id<ScannerDevice> scanner = [ScannerDeviceFactory getInstance:deviceBrand deviceType:DeviceTypeRFID];
-            if (scanner) {
-                NSArray *devices = [scanner getDeviceList];
-                [allDevices addObjectsFromArray:[devices valueForKey:@"toDictionary"]];
-            }
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+
+- (void)onDeviceListChanged:(NSNotification *)notification {
+    [self sendDeviceListUpdate];
+}
+
+- (void)subscribeDeviceList:(CDVInvokedUrlCommand*)command {
+    _deviceListCallbackId = command.callbackId;
+    [self sendDeviceListUpdate];
+}
+
+- (void)unsubscribeDeviceList:(CDVInvokedUrlCommand*)command {
+    _deviceListCallbackId = nil;
+
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                                     messageAsString:@"Unsubscribed device list updates"];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)sendDeviceListUpdate {
+    if (!_deviceListCallbackId) {
+        // No active subscriber
+        return;
+    }
+
+    // Collect all devices from all brands
+    NSMutableArray *allDevices = [NSMutableArray array];
+    NSArray<NSNumber *> *supportedDeviceBrands = @[@(DeviceBrandZebra), @(DeviceBrandTSL)];
+    
+    for (NSNumber *brand in supportedDeviceBrands) {
+        DeviceBrand deviceBrand = DeviceBrandFromString([brand stringValue]);
+        id<ScannerDevice> scanner = [ScannerDeviceFactory getInstance:deviceBrand deviceType:DeviceTypeRFID];
+        if (scanner) {
+            NSArray *devices = [scanner getDeviceList];
+            [allDevices addObjectsFromArray:[devices valueForKey:@"toDictionary"]];
         }
+    }
 
-        NSError *error = nil;
-        NSString *status = @"true";
-        NSString *errorMsg = @"";
-        NSData *json = nil;
-        NSString *jsonMsg = nil;
-        if (!allDevices || !allDevices.count) {
-            status = @"false";
-            errorMsg = @"Bluetooth connection is not enabled or device is not paired.";
-        }
-        NSDictionary *dict = @{@"data" : allDevices, @"errorMsg" : errorMsg, @"status" : status};
-        if ([NSJSONSerialization isValidJSONObject:dict]) {
-            json = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted error:&error];
-            if (json != nil && error == nil) {
-                jsonMsg = [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
-            }
-        }
+    NSString *status = allDevices.count ? @"true" : @"false";
+    NSString *errorMsg = allDevices.count ? @"" : @"Bluetooth not enabled or device not paired.";
+    NSDictionary *dict = @{@"data": allDevices, @"status": status, @"errorMsg": errorMsg};
 
-        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:jsonMsg];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-    }];
+    NSError *error = nil;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict options:0 error:&error];
+    if (!jsonData || error) {
+        NSLog(@"Error serializing device list: %@", error);
+        return;
+    }
+    NSString *jsonMsg = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                                     messageAsString:jsonMsg];
+    [pluginResult setKeepCallbackAsBool:YES]; // Keep callback for future updates
+
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:_deviceListCallbackId];
 }
 
 - (void)connect:(CDVInvokedUrlCommand*)command {

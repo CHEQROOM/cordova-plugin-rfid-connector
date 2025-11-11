@@ -1,4 +1,6 @@
+#import <Foundation/Foundation.h>
 #import "ZebraDeviceBase.h"
+
 
 @implementation ZebraDeviceBase
 
@@ -20,6 +22,7 @@
     }
     if (!exists) {
         [self.deviceList addObject:device];
+        [self notifyDeviceListChanged];
     }
 }
 
@@ -33,6 +36,7 @@
     }
     if (toRemove) {
         [self.deviceList removeObject:toRemove];
+        [self notifyDeviceListChanged];
     }
 }
 
@@ -43,6 +47,13 @@
         }
     }
     return nil;
+}
+
+- (void)notifyDeviceListChanged {
+    NSDictionary *userInfo = @{ @"devices": self.deviceList };
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"ScannerDeviceListUpdated"
+                                                        object:self
+                                                      userInfo:userInfo];
 }
 
 @end

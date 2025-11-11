@@ -1,99 +1,166 @@
+var exec = require("cordova/exec");
 
-var exec = require('cordova/exec');
+var RFIDConnector = function () {};
 
-var RFIDConnector = function () {
+window.RFIDConnector = RFIDConnector;
+
+RFIDConnector.prototype.subscribeDeviceList = function (
+  successCallback,
+  failureCallback
+) {
+  exec(
+    successCallback,
+    failureCallback,
+    "RFIDConnector",
+    "subscribeDeviceList",
+    []
+  );
 };
 
-window.RFIDConnector = RFIDConnector
+RFIDConnector.prototype.unsubscribeDeviceList = function (
+  successCallback,
+  failureCallback
+) {
+  exec(
+    successCallback,
+    failureCallback,
+    "RFIDConnector",
+    "unsubscribeDeviceList",
+    []
+  );
+};
 
-RFIDConnector.prototype.getDeviceList = function (successCallback,
-	failureCallback) {
-	exec(successCallback, failureCallback, 'RFIDConnector',
-		'getDeviceList', []);
-}
+RFIDConnector.prototype.connect = function (
+  deviceBrand,
+  deviceID,
+  deviceType,
+  successCallback,
+  failureCallback
+) {
+  deviceType = deviceType || "RFID";
 
-RFIDConnector.prototype.connect = function (deviceBrand, deviceID, deviceType,
-	successCallback, failureCallback) {
-	deviceType = deviceType || "RFID";
+  exec(successCallback, failureCallback, "RFIDConnector", "connect", [
+    deviceBrand,
+    deviceID,
+    deviceType,
+  ]);
+};
 
-	exec(successCallback, failureCallback, 'RFIDConnector', 'connect', [
-		deviceBrand, deviceID, deviceType]);
-}
+RFIDConnector.prototype.isConnected = function (
+  successCallback,
+  failureCallback
+) {
+  exec(successCallback, failureCallback, "RFIDConnector", "isConnected", []);
+};
 
-RFIDConnector.prototype.isConnected = function (successCallback,
-	failureCallback) {
-	exec(successCallback, failureCallback, 'RFIDConnector', 'isConnected',
-		[]);
-}
+RFIDConnector.prototype.disconnect = function (
+  successCallback,
+  failureCallback
+) {
+  exec(successCallback, failureCallback, "RFIDConnector", "disconnect", []);
+};
 
-RFIDConnector.prototype.disconnect = function (successCallback,
-	failureCallback) {
-	exec(successCallback, failureCallback, 'RFIDConnector', 'disconnect',
-		[]);
-}
+RFIDConnector.prototype.getDeviceInfo = function (
+  successCallback,
+  failureCallback
+) {
+  exec(successCallback, failureCallback, "RFIDConnector", "getDeviceInfo", []);
+};
 
-RFIDConnector.prototype.getDeviceInfo = function (successCallback,
-	failureCallback) {
-	exec(successCallback, failureCallback, 'RFIDConnector',
-		'getDeviceInfo', []);
-}
+RFIDConnector.prototype.scanRFIDs = function (
+  useAscii,
+  successCallback,
+  failureCallback
+) {
+  exec(successCallback, failureCallback, "RFIDConnector", "scanRFIDs", [
+    useAscii,
+  ]);
+};
 
-RFIDConnector.prototype.scanRFIDs = function (useAscii, successCallback,
-	failureCallback) {
-	exec(successCallback, failureCallback, 'RFIDConnector', 'scanRFIDs',
-		[useAscii]);
-}
+RFIDConnector.prototype.search = function (
+  tagID,
+  useAscii,
+  successCallback,
+  failureCallback
+) {
+  exec(successCallback, failureCallback, "RFIDConnector", "search", [
+    tagID,
+    useAscii,
+  ]);
+};
 
-RFIDConnector.prototype.search = function (tagID, useAscii, successCallback,
-	failureCallback) {
-	exec(successCallback, failureCallback, 'RFIDConnector', 'search', [
-		tagID, useAscii]);
-}
+RFIDConnector.prototype.setOutputPower = function (
+  power,
+  successCallback,
+  failureCallback
+) {
+  exec(successCallback, failureCallback, "RFIDConnector", "setOutputPower", [
+    power,
+  ]);
+};
 
-RFIDConnector.prototype.setOutputPower = function (power, successCallback,
-	failureCallback) {
-	exec(successCallback, failureCallback, 'RFIDConnector',
-		'setOutputPower', [power]);
-}
+RFIDConnector.prototype.subscribeScanner = function (
+  useAscii,
+  successCallback,
+  failureCallback
+) {
+  exec(successCallback, failureCallback, "RFIDConnector", "subscribeScanner", [
+    useAscii,
+  ]);
+};
 
-RFIDConnector.prototype.subscribeScanner = function (useAscii,
-	successCallback, failureCallback) {
-	exec(successCallback, failureCallback, 'RFIDConnector',
-		'subscribeScanner', [useAscii]);
-}
+RFIDConnector.prototype.unsubscribeScanner = function (
+  successCallback,
+  failureCallback
+) {
+  exec(
+    successCallback,
+    failureCallback,
+    "RFIDConnector",
+    "unsubscribeScanner",
+    []
+  );
+};
 
-RFIDConnector.prototype.unsubscribeScanner = function (successCallback,
-	failureCallback) {
-	exec(successCallback, failureCallback, 'RFIDConnector',
-		'unsubscribeScanner', []);
-}
+RFIDConnector.prototype.startSearch = function (
+  tagID,
+  useAscii,
+  successCallback,
+  failureCallback
+) {
+  exec(successCallback, failureCallback, "RFIDConnector", "startSearch", [
+    tagID,
+    useAscii,
+  ]);
+};
 
-RFIDConnector.prototype.startSearch = function (tagID, useAscii,
-	successCallback, failureCallback) {
-	exec(successCallback, failureCallback, 'RFIDConnector', 'startSearch',
-		[tagID, useAscii]);
-}
+RFIDConnector.prototype.stopSearch = function (
+  successCallback,
+  failureCallback
+) {
+  exec(successCallback, failureCallback, "RFIDConnector", "stopSearch", []);
+};
 
-RFIDConnector.prototype.stopSearch = function (successCallback,
-	failureCallback) {
-	exec(successCallback, failureCallback, 'RFIDConnector', 'stopSearch',
-		[]);
-}
-
-RFIDConnector.prototype.getPairingBarcode = function (successCallback,
-	failureCallback) {
-	exec(successCallback, failureCallback, 'RFIDConnector', 'getPairingBarcode',
-		[]);
-}
-
+RFIDConnector.prototype.getPairingBarcode = function (
+  successCallback,
+  failureCallback
+) {
+  exec(
+    successCallback,
+    failureCallback,
+    "RFIDConnector",
+    "getPairingBarcode",
+    []
+  );
+};
 
 RFIDConnector.install = function () {
-	if (!window.plugins) {
-		window.plugins = {};
-	}
+  if (!window.plugins) {
+    window.plugins = {};
+  }
 
-	window.plugins.rfid = new RFIDConnector();
-	return window.plugins.rfid;
+  window.plugins.rfid = new RFIDConnector();
+  return window.plugins.rfid;
 };
 
 cordova.addConstructor(RFIDConnector.install);
