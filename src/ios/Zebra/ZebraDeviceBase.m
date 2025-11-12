@@ -29,7 +29,7 @@
 - (void)removeDevice:(int)deviceId {
     ScannerDeviceInfo *toRemove = nil;
     for (ScannerDeviceInfo *info in self.deviceList) {
-        if (info.deviceId == deviceId) {
+        if ([info.deviceId isEqualToString:deviceId]) {
             toRemove = info;
             break;
         }
