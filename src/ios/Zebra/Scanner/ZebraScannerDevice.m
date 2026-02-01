@@ -8,6 +8,7 @@
 #import "ZebraScannerDevice.h"
 #import "ScannerDeviceInfo.h"
 #import "ScannerEventReceiver.h"
+#import "ZebraDeviceBase.h"
 #import <Cordova/CDV.h>
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>

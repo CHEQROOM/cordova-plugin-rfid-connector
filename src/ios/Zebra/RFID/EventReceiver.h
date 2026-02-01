@@ -1,0 +1,3 @@
+@interface EventReceiver : NSObject <srfidISdkApiDelegate> {
+
+}
